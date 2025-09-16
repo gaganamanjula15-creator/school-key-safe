@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LoginPage } from '@/components/login-page';
-import { StudentDashboard } from '@/components/dashboards/student-dashboard';
-import { TeacherDashboard } from '@/components/dashboards/teacher-dashboard';
+import { EnhancedStudentDashboard } from '@/components/enhanced-student-dashboard';
+import { EnhancedTeacherDashboard } from '@/components/enhanced-teacher-dashboard';
 import { AdminDashboard } from '@/components/dashboards/admin-dashboard';
 
 type UserRole = 'student' | 'teacher' | 'admin';
@@ -97,9 +97,9 @@ const Index = () => {
   if (currentUser) {
     switch (currentUser.role) {
       case 'student':
-        return <StudentDashboard student={currentUser} onLogout={handleLogout} />;
+        return <EnhancedStudentDashboard student={currentUser} onLogout={handleLogout} />;
       case 'teacher':
-        return <TeacherDashboard teacher={currentUser} onLogout={handleLogout} />;
+        return <EnhancedTeacherDashboard teacher={currentUser} onLogout={handleLogout} />;
       case 'admin':
         return <AdminDashboard admin={currentUser} onLogout={handleLogout} />;
     }
