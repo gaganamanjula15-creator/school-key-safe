@@ -16,6 +16,11 @@ import {
   BarChart3,
   School
 } from 'lucide-react';
+import { SchoolConfig } from '@/components/admin/school-config';
+import { IdCardConfig } from '@/components/admin/id-card-config';
+import { SecurityConfig } from '@/components/admin/security-config';
+import { BackupConfig } from '@/components/admin/backup-config';
+import { useToast } from '@/hooks/use-toast';
 
 interface AdminData {
   name: string;
@@ -30,6 +35,11 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [schoolConfigOpen, setSchoolConfigOpen] = useState(false);
+  const [idCardConfigOpen, setIdCardConfigOpen] = useState(false);
+  const [securityConfigOpen, setSecurityConfigOpen] = useState(false);
+  const [backupConfigOpen, setBackupConfigOpen] = useState(false);
+  const { toast } = useToast();
 
   // Mock data
   const systemStats = {
@@ -48,7 +58,10 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
 
   const handleApproval = (id: string, approved: boolean) => {
     console.log(`${approved ? 'Approved' : 'Rejected'} user ${id}`);
-    // Implementation would connect to backend
+    toast({
+      title: approved ? "User Approved" : "User Rejected",
+      description: `User registration has been ${approved ? 'approved' : 'rejected'}.`,
+    });
   };
 
   return (
@@ -244,7 +257,13 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                       <p className="text-sm text-muted-foreground mb-4">
                         Upload a CSV file with user data
                       </p>
-                      <Button variant="outline">
+                      <Button 
+                        variant="outline"
+                        onClick={() => toast({
+                          title: "File Upload",
+                          description: "CSV import functionality requires backend integration.",
+                        })}
+                      >
                         Choose File
                       </Button>
                     </div>
@@ -253,13 +272,34 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                   <div className="space-y-4">
                     <h4 className="font-semibold">Bulk Actions</h4>
                     <div className="space-y-2">
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start"
+                        onClick={() => toast({
+                          title: "Export Started",
+                          description: "User data export is being prepared.",
+                        })}
+                      >
                         Export All Users to CSV
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start"
+                        onClick={() => toast({
+                          title: "ID Cards Generation",
+                          description: "Bulk ID card generation started.",
+                        })}
+                      >
                         Generate ID Cards for All Students
                       </Button>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start"
+                        onClick={() => toast({
+                          title: "Password Reset",
+                          description: "Password reset emails are being sent.",
+                        })}
+                      >
                         Send Password Reset Emails
                       </Button>
                     </div>
@@ -328,6 +368,24 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Configuration Dialogs */}
+      <SchoolConfig 
+        isOpen={schoolConfigOpen} 
+        onClose={() => setSchoolConfigOpen(false)} 
+      />
+      <IdCardConfig 
+        isOpen={idCardConfigOpen} 
+        onClose={() => setIdCardConfigOpen(false)} 
+      />
+      <SecurityConfig 
+        isOpen={securityConfigOpen} 
+        onClose={() => setSecurityConfigOpen(false)} 
+      />
+      <BackupConfig 
+        isOpen={backupConfigOpen} 
+        onClose={() => setBackupConfigOpen(false)} 
+      />
     </div>
   );
 }
