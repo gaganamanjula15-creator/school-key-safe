@@ -3,8 +3,9 @@ import { LoginPage } from '@/components/login-page';
 import { EnhancedStudentDashboard } from '@/components/enhanced-student-dashboard';
 import { EnhancedTeacherDashboard } from '@/components/enhanced-teacher-dashboard';
 import { AdminDashboard } from '@/components/dashboards/admin-dashboard';
+import { ParentDashboard } from '@/components/dashboards/parent-dashboard';
 
-type UserRole = 'student' | 'teacher' | 'admin';
+type UserRole = 'student' | 'teacher' | 'admin' | 'parent';
 
 interface StudentData {
   name: string;
@@ -35,10 +36,33 @@ interface AdminData {
   email: string;
 }
 
+interface ParentData {
+  name: string;
+  id: string;
+  email: string;
+  children: Array<{
+    id: string;
+    name: string;
+    class: string;
+    attendanceRate: number;
+    recentGrades: Array<{
+      subject: string;
+      grade: string;
+      date: string;
+    }>;
+    homeworkPending: number;
+    recentAttendance: Array<{
+      date: string;
+      status: 'present' | 'absent';
+    }>;
+  }>;
+}
+
 type User = 
   | ({ role: 'student' } & StudentData)
   | ({ role: 'teacher' } & TeacherData)  
-  | ({ role: 'admin' } & AdminData);
+  | ({ role: 'admin' } & AdminData)
+  | ({ role: 'parent' } & ParentData);
 
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -78,6 +102,53 @@ const Index = () => {
       name: 'Michael Chen',
       id: 'A001',
       email: 'admin@school.edu'
+    },
+    parent: {
+      role: 'parent',
+      name: 'Jennifer Smith',
+      id: 'P001',
+      email: 'jennifer.smith@email.com',
+      children: [
+        {
+          id: 'S2024001',
+          name: 'Emma Smith',
+          class: 'Grade 10-A',
+          attendanceRate: 94,
+          recentGrades: [
+            { subject: 'Mathematics', grade: 'A', date: 'Sep 15, 2024' },
+            { subject: 'Science', grade: 'B+', date: 'Sep 14, 2024' },
+            { subject: 'English', grade: 'A-', date: 'Sep 13, 2024' },
+            { subject: 'History', grade: 'B', date: 'Sep 12, 2024' },
+          ],
+          homeworkPending: 2,
+          recentAttendance: [
+            { date: 'Sep 16, 2024', status: 'present' as const },
+            { date: 'Sep 15, 2024', status: 'present' as const },
+            { date: 'Sep 14, 2024', status: 'present' as const },
+            { date: 'Sep 13, 2024', status: 'absent' as const },
+            { date: 'Sep 12, 2024', status: 'present' as const },
+          ]
+        },
+        {
+          id: 'S2024002',
+          name: 'James Smith',
+          class: 'Grade 8-B',
+          attendanceRate: 88,
+          recentGrades: [
+            { subject: 'Mathematics', grade: 'B', date: 'Sep 15, 2024' },
+            { subject: 'Science', grade: 'A-', date: 'Sep 14, 2024' },
+            { subject: 'English', grade: 'B+', date: 'Sep 13, 2024' },
+          ],
+          homeworkPending: 1,
+          recentAttendance: [
+            { date: 'Sep 16, 2024', status: 'present' as const },
+            { date: 'Sep 15, 2024', status: 'absent' as const },
+            { date: 'Sep 14, 2024', status: 'present' as const },
+            { date: 'Sep 13, 2024', status: 'present' as const },
+            { date: 'Sep 12, 2024', status: 'present' as const },
+          ]
+        }
+      ]
     }
   };
 
@@ -100,6 +171,8 @@ const Index = () => {
         return <EnhancedStudentDashboard student={currentUser} onLogout={handleLogout} />;
       case 'teacher':
         return <EnhancedTeacherDashboard teacher={currentUser} onLogout={handleLogout} />;
+      case 'parent':
+        return <ParentDashboard parent={currentUser} onLogout={handleLogout} />;
       case 'admin':
         return <AdminDashboard admin={currentUser} onLogout={handleLogout} />;
     }

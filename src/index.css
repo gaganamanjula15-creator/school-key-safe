@@ -25,6 +25,10 @@ All colors MUST be HSL. Institutional, professional design.
     /* Professional Purple Accent */
     --secondary: 262 83% 58%;
     --secondary-foreground: 0 0% 100%;
+    
+    /* Parent Theme - Warm & Caring */
+    --parent-primary: 330 81% 60%;
+    --parent-secondary: 345 83% 47%;
 
     --muted: 218 27% 94%;
     --muted-foreground: 221 13% 46%;

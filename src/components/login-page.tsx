@@ -4,11 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { UserCircle, GraduationCap, Users, Shield } from 'lucide-react';
+import { UserCircle, GraduationCap, Users, Shield, Heart } from 'lucide-react';
 import schoolLogo from '@/assets/school-logo.png';
 import heroBg from '@/assets/hero-bg.jpg';
 
-type UserRole = 'student' | 'teacher' | 'admin';
+type UserRole = 'student' | 'teacher' | 'admin' | 'parent';
 
 interface LoginPageProps {
   onLogin: (role: UserRole, credentials: { email: string; password: string }) => void;
@@ -31,6 +31,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       label: 'Teacher',
       icon: Users,
       description: 'Manage classes and track attendance'
+    },
+    {
+      value: 'parent' as const,
+      label: 'Parent',
+      icon: Heart,
+      description: 'Monitor your child\'s progress'
     },
     {
       value: 'admin' as const,
