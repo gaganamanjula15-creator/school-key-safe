@@ -110,9 +110,9 @@ export function UserManagement() {
       setUsers([
         {
           id: '1',
-          email: 'admin@school.edu',
-          first_name: 'System',
-          last_name: 'Administrator',
+          email: 'gagana.manjula@school.edu',
+          first_name: 'Gagana',
+          last_name: 'Manjula',
           role: 'admin',
           phone: '+1 (555) 0123',
           department: 'Administration',

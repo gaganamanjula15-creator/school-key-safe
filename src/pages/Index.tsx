@@ -99,9 +99,9 @@ const Index = () => {
     },
     admin: {
       role: 'admin',
-      name: 'Michael Chen',
+      name: 'Gagana Manjula',
       id: 'A001',
-      email: 'admin@school.edu'
+      email: 'gagana.manjula@school.edu'
     },
     parent: {
       role: 'parent',
