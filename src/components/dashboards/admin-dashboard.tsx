@@ -96,7 +96,7 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
       const { data, error } = await supabase.functions.invoke('admin-system-control', {
         body: { 
           action,
-          adminEmail: admin.email
+          adminName: admin.name // Send admin name for verification
         }
       });
 

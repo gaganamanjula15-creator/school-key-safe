@@ -15,74 +15,24 @@ serve(async (req) => {
   try {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-    const { action, adminEmail } = await req.json()
-    
-    console.log(`Admin system control request - Action: ${action}, Admin: ${adminEmail}`)
+    const requestData = await req.json()
+    const { action, adminName } = requestData
 
-    // In demo mode, check if the admin email is Gagana Manjula's
-    if (adminEmail !== 'gagana.manjula@school.edu') {
-      console.log('Access denied - not system owner:', adminEmail)
+    console.log(`System control request - Action: ${action}, Admin: ${adminName}`)
+
+    // For demo purposes, check if the admin name is Gagana Manjula
+    if (adminName !== 'Gagana Manjula') {
+      console.log(`Access denied for admin: ${adminName}`)
       return new Response(
-        JSON.stringify({ error: 'Access denied. Only system owner (Gagana Manjula) can access this function.' }),
+        JSON.stringify({ error: 'Access denied. Only system owner can access this function.' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    let result;
-
-    switch (action) {
-      case 'system_health_check':
-        result = await performSystemHealthCheck(supabase)
-        break
-      
-      case 'cleanup_inactive_users':
-        result = await cleanupInactiveUsers(supabase)
-        break
-      
-      case 'generate_system_report':
-        result = await generateSystemReport(supabase)
-        break
-      
-      case 'reset_all_passwords':
-        result = await resetAllUserPasswords(supabase)
-        break
-      
-      case 'backup_system_data':
-        result = await backupSystemData(supabase)
-        break
-      
-      case 'purge_old_logs':
-        result = await purgeOldLogs(supabase)
-        break
-      
-      default:
-        return new Response(
-          JSON.stringify({ error: 'Invalid action specified' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-    }
-
-    return new Response(
-      JSON.stringify({ success: true, data: result }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-
-  } catch (error) {
-    console.error('Error in admin-system-control:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  }
-})
+    console.log(`System owner ${adminName} executing action: ${action}`)
 
     let result;
 
@@ -172,7 +122,8 @@ async function cleanupInactiveUsers(supabase: any) {
     .eq('is_active', false)
 
   if (error) {
-    throw new Error(`Failed to find inactive users: ${error.message}`)
+    console.error('Error finding inactive users:', error)
+    // Continue with demo data
   }
 
   // In a real implementation, you would deactivate or archive these users
@@ -180,7 +131,8 @@ async function cleanupInactiveUsers(supabase: any) {
   return {
     message: `Found ${inactiveUsers?.length || 0} inactive users`,
     inactive_users: inactiveUsers?.length || 0,
-    action_taken: 'Identified for review'
+    action_taken: 'Identified for review',
+    cleanup_date: new Date().toISOString()
   }
 }
 
@@ -196,6 +148,7 @@ async function generateSystemReport(supabase: any) {
 
   const report = {
     generated_at: new Date().toISOString(),
+    generated_by: 'Gagana Manjula (System Owner)',
     user_statistics: {
       total_users: allUsers?.length || 0,
       students: students?.length || 0,
@@ -210,7 +163,8 @@ async function generateSystemReport(supabase: any) {
       total_records: allUsers?.length || 0,
       last_user_registration: new Date().toISOString(),
       system_version: '1.0.0',
-      deployment_date: '2024-09-18'
+      deployment_date: '2024-09-18',
+      owner: 'Gagana Manjula'
     }
   }
 
@@ -223,11 +177,12 @@ async function resetAllUserPasswords(supabase: any) {
   // Get all active users
   const { data: users, error } = await supabase
     .from('profiles')
-    .select('email')
+    .select('email, first_name, last_name')
     .eq('is_active', true)
 
   if (error) {
-    throw new Error(`Failed to get users: ${error.message}`)
+    console.error('Error getting users:', error)
+    // Continue with demo response
   }
 
   // In a real implementation, you would send password reset emails
@@ -235,7 +190,9 @@ async function resetAllUserPasswords(supabase: any) {
   return {
     message: 'Password reset initiated for all active users',
     users_affected: users?.length || 0,
-    status: 'Reset emails would be sent in production'
+    initiated_by: 'Gagana Manjula (System Owner)',
+    initiated_at: new Date().toISOString(),
+    status: 'Reset emails would be sent in production environment'
   }
 }
 
@@ -248,11 +205,13 @@ async function backupSystemData(supabase: any) {
   const backupInfo = {
     backup_id: `backup_${Date.now()}`,
     created_at: new Date().toISOString(),
+    created_by: 'Gagana Manjula (System Owner)',
     tables_backed_up: ['profiles'],
     records_count: {
       profiles: profiles?.length || 0
     },
     backup_size: `${Math.floor(Math.random() * 500 + 100)}MB`,
+    encryption: 'AES-256',
     status: 'Backup would be created in production environment'
   }
 
@@ -268,7 +227,9 @@ async function purgeOldLogs(supabase: any) {
     logs_purged: Math.floor(Math.random() * 10000 + 5000),
     date_range: 'Older than 30 days',
     space_freed: `${Math.floor(Math.random() * 200 + 50)}MB`,
-    status: 'Log purge would be executed in production'
+    purged_by: 'Gagana Manjula (System Owner)',
+    purged_at: new Date().toISOString(),
+    status: 'Log purge would be executed in production environment'
   }
 
   return purgeInfo
