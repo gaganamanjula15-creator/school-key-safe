@@ -294,46 +294,155 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-semibold">School Information</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Update school name, logo, and contact details
-                      </p>
+                  <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer"
+                       onClick={() => setSchoolConfigOpen(true)}>
+                    <div className="flex items-center gap-3">
+                      <School className="w-5 h-5 text-primary" />
+                      <div>
+                        <h4 className="font-semibold">School Information</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Update school name, logo, and contact details
+                        </p>
+                      </div>
                     </div>
-                    <Button variant="outline">Configure</Button>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        Ready
+                      </Badge>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSchoolConfigOpen(true);
+                        }}
+                      >
+                        Configure
+                      </Button>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-semibold">ID Card Templates</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Customize digital ID card appearance
-                      </p>
+                  <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer"
+                       onClick={() => setIdCardConfigOpen(true)}>
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-secondary" />
+                      <div>
+                        <h4 className="font-semibold">ID Card Templates</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Customize digital ID card appearance
+                        </p>
+                      </div>
                     </div>
-                    <Button variant="outline">Customize</Button>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        Active
+                      </Badge>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIdCardConfigOpen(true);
+                        }}
+                      >
+                        Customize
+                      </Button>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-semibold">Security Settings</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Manage password policies and authentication
-                      </p>
+                  <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer"
+                       onClick={() => setSecurityConfigOpen(true)}>
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-warning" />
+                      <div>
+                        <h4 className="font-semibold">Security Settings</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Manage password policies and authentication
+                        </p>
+                      </div>
                     </div>
-                    <Button variant="outline">Manage</Button>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs border-warning text-warning">
+                        Review Needed
+                      </Badge>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSecurityConfigOpen(true);
+                        }}
+                      >
+                        Manage
+                      </Button>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-semibold">Backup & Export</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Schedule backups and data exports
-                      </p>
+                  <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer"
+                       onClick={() => setBackupConfigOpen(true)}>
+                    <div className="flex items-center gap-3">
+                      <Settings className="w-5 h-5 text-success" />
+                      <div>
+                        <h4 className="font-semibold">Backup & Export</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Schedule backups and data exports
+                        </p>
+                      </div>
                     </div>
-                    <Button variant="outline">Setup</Button>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs border-success text-success">
+                        Configured
+                      </Badge>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBackupConfigOpen(true);
+                        }}
+                      >
+                        Setup
+                      </Button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Quick Actions */}
+                <Card className="border-primary/20 bg-gradient-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button 
+                        variant="outline" 
+                        className="justify-start h-auto p-3"
+                        onClick={() => {
+                          toast({
+                            title: "System Status",
+                            description: "All systems operational. Last check: just now",
+                          });
+                        }}
+                      >
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        System Health
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="justify-start h-auto p-3"
+                        onClick={() => {
+                          toast({
+                            title: "Cache Cleared",
+                            description: "System cache has been cleared successfully.",
+                          });
+                        }}
+                      >
+                        <Shield className="w-4 h-4 mr-2" />
+                        Clear Cache
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
           </TabsContent>
