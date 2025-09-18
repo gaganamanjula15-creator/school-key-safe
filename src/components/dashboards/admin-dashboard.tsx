@@ -22,14 +22,17 @@ import {
   RefreshCw,
   Trash2,
   Download,
-  AlertTriangle
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { SchoolConfig } from '@/components/admin/school-config';
 import { IdCardConfig } from '@/components/admin/id-card-config';
 import { SecurityConfig } from '@/components/admin/security-config';
 import { BackupConfig } from '@/components/admin/backup-config';
-import { useToast } from '@/hooks/use-toast';
 import { UserManagement } from '@/components/user-management';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AdminData {
@@ -51,32 +54,85 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   const [backupConfigOpen, setBackupConfigOpen] = useState(false);
   const [systemControlLoading, setSystemControlLoading] = useState(false);
   const [systemControlResult, setSystemControlResult] = useState<any>(null);
+  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Check if current admin is Gagana Manjula (system owner)
   const isSystemOwner = admin.name === 'Gagana Manjula';
 
-  // Mock data
+  useEffect(() => {
+    fetchPendingUsers();
+  }, []);
+
+  const fetchPendingUsers = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('approved', false)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching pending users:', error);
+      return;
+    }
+
+    setPendingUsers(data || []);
+  };
+
+  const handleApproveUser = async (userId: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ approved: true })
+      .eq('id', userId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to approve user",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "User approved successfully",
+    });
+
+    fetchPendingUsers(); // Refresh the list
+  };
+
+  const handleRejectUser = async (userId: string) => {
+    // Delete the profile and this will cascade to delete the auth user
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to reject user",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "User registration rejected",
+    });
+
+    fetchPendingUsers(); // Refresh the list
+  };
+
+  // Mock data for stats
   const systemStats = {
     totalStudents: 1247,
     totalTeachers: 78,
     totalAdmins: 5,
     activeToday: 892,
-    pendingApprovals: 12
-  };
-
-  const pendingUsers = [
-    { id: '1', name: 'Emma Wilson', role: 'student', class: 'Grade 10A', submitted: '2 hours ago' },
-    { id: '2', name: 'James Brown', role: 'teacher', department: 'Mathematics', submitted: '4 hours ago' },
-    { id: '3', name: 'Sarah Davis', role: 'student', class: 'Grade 9B', submitted: '1 day ago' },
-  ];
-
-  const handleApproval = (id: string, approved: boolean) => {
-    console.log(`${approved ? 'Approved' : 'Rejected'} user ${id}`);
-    toast({
-      title: approved ? "User Approved" : "User Rejected",
-      description: `User registration has been ${approved ? 'approved' : 'rejected'}.`,
-    });
+    pendingApprovals: pendingUsers.length
   };
 
   const executeSystemControl = async (action: string, actionName: string) => {
@@ -200,7 +256,7 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UserPlus className="w-5 h-5" />
-                  Pending User Registrations
+                  Pending User Registrations ({pendingUsers.length})
                 </CardTitle>
                 <CardDescription>
                   Review and approve new user registrations
@@ -217,9 +273,15 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
                             <div>
-                              <p className="font-semibold">{user.name}</p>
+                              <p className="font-semibold">
+                                {user.first_name} {user.last_name}
+                              </p>
                               <p className="text-sm text-muted-foreground">
-                                {user.class || user.department} • Submitted {user.submitted}
+                                {user.email} • {user.role}
+                                {user.role === 'student' && user.grade && ` • ${user.grade}`}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Registered: {new Date(user.created_at).toLocaleDateString()}
                               </p>
                             </div>
                             <Badge variant="outline" className="ml-2">
@@ -232,17 +294,17 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                             size="sm"
                             variant="outline"
                             className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => handleApproval(user.id, false)}
+                            onClick={() => handleRejectUser(user.id)}
                           >
-                            <X className="w-4 h-4 mr-1" />
+                            <XCircle className="w-4 h-4 mr-1" />
                             Reject
                           </Button>
                           <Button
                             size="sm"
                             className="bg-success hover:bg-success/90 text-success-foreground"
-                            onClick={() => handleApproval(user.id, true)}
+                            onClick={() => handleApproveUser(user.id)}
                           >
-                            <Check className="w-4 h-4 mr-1" />
+                            <CheckCircle className="w-4 h-4 mr-1" />
                             Approve
                           </Button>
                         </div>
@@ -392,17 +454,17 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
-                        Active
+                        Ready
                       </Badge>
                       <Button 
-                        variant="outline"
+                        variant="outline" 
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           setIdCardConfigOpen(true);
                         }}
                       >
-                        Customize
+                        Configure
                       </Button>
                     </div>
                   </div>
@@ -410,27 +472,27 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                   <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer"
                        onClick={() => setSecurityConfigOpen(true)}>
                     <div className="flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-warning" />
+                      <Lock className="w-5 h-5 text-accent" />
                       <div>
                         <h4 className="font-semibold">Security Settings</h4>
                         <p className="text-sm text-muted-foreground">
-                          Manage password policies and authentication
+                          Configure authentication and access controls
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs border-warning text-warning">
-                        Review Needed
+                      <Badge variant="secondary" className="text-xs">
+                        Ready
                       </Badge>
                       <Button 
-                        variant="outline"
+                        variant="outline" 
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSecurityConfigOpen(true);
                         }}
                       >
-                        Manage
+                        Configure
                       </Button>
                     </div>
                   </div>
@@ -438,222 +500,154 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                   <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer"
                        onClick={() => setBackupConfigOpen(true)}>
                     <div className="flex items-center gap-3">
-                      <Settings className="w-5 h-5 text-success" />
+                      <Database className="w-5 h-5 text-warning" />
                       <div>
-                        <h4 className="font-semibold">Backup & Export</h4>
+                        <h4 className="font-semibold">Backup & Recovery</h4>
                         <p className="text-sm text-muted-foreground">
-                          Schedule backups and data exports
+                          Configure automated backups and data recovery
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs border-success text-success">
-                        Configured
+                      <Badge variant="secondary" className="text-xs">
+                        Ready
                       </Badge>
                       <Button 
-                        variant="outline"
+                        variant="outline" 
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           setBackupConfigOpen(true);
                         }}
                       >
-                        Setup
+                        Configure
                       </Button>
                     </div>
                   </div>
                 </div>
-
-                {/* Quick Actions */}
-                <Card className="border-primary/20 bg-gradient-card">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Quick Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        variant="outline" 
-                        className="justify-start h-auto p-3"
-                        onClick={() => {
-                          toast({
-                            title: "System Status",
-                            description: "All systems operational. Last check: just now",
-                          });
-                        }}
-                      >
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        System Health
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="justify-start h-auto p-3"
-                        onClick={() => {
-                          toast({
-                            title: "Cache Cleared",
-                            description: "System cache has been cleared successfully.",
-                          });
-                        }}
-                      >
-                        <Shield className="w-4 h-4 mr-2" />
-                        Clear Cache
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* System Control Tab - Only for Gagana Manjula */}
+          {/* System Control Tab - Only for System Owner */}
           {isSystemOwner && (
             <TabsContent value="control" className="space-y-6">
-              <Alert className="border-warning bg-warning/5">
+              <Alert className="border-destructive/20 bg-destructive/5">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>System Owner Access:</strong> These functions are restricted to the system owner (Gagana Manjula) only.
-                  Use with caution as they affect the entire system.
+                  <strong>Restricted Access:</strong> This section is only available to the system owner (Gagana Manjula). 
+                  These actions can affect the entire system and should be used with extreme caution.
                 </AlertDescription>
               </Alert>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* System Health */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-success" />
-                      System Health
-                    </CardTitle>
-                    <CardDescription>
-                      Monitor system performance and health metrics
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button 
-                      onClick={() => executeSystemControl('system_health_check', 'System Health Check')}
-                      disabled={systemControlLoading}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <Activity className="w-4 h-4 mr-2" />
-                      Run Health Check
-                    </Button>
-                    <Button 
-                      onClick={() => executeSystemControl('generate_system_report', 'System Report Generation')}
-                      disabled={systemControlLoading}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <BarChart3 className="w-4 h-4 mr-2" />
-                      Generate System Report
-                    </Button>
-                  </CardContent>
-                </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <Shield className="w-5 h-5" />
+                    System Control Panel
+                  </CardTitle>
+                  <CardDescription>
+                    Advanced system operations - Use with extreme caution
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid gap-4">
+                    <div className="flex items-center justify-between p-4 border border-warning/20 rounded-lg bg-warning/5">
+                      <div className="flex items-center gap-3">
+                        <Database className="w-5 h-5 text-warning" />
+                        <div>
+                          <h4 className="font-semibold">Database Maintenance</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Perform database cleanup and optimization
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        disabled={systemControlLoading}
+                        onClick={() => executeSystemControl('database_maintenance', 'Database Maintenance')}
+                        className="border-warning text-warning hover:bg-warning hover:text-warning-foreground"
+                      >
+                        {systemControlLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Execute'}
+                      </Button>
+                    </div>
 
-                {/* User Management */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-primary" />
-                      User Management
-                    </CardTitle>
-                    <CardDescription>
-                      Advanced user management operations
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button 
-                      onClick={() => executeSystemControl('cleanup_inactive_users', 'Inactive User Cleanup')}
-                      disabled={systemControlLoading}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Cleanup Inactive Users
-                    </Button>
-                    <Button 
-                      onClick={() => executeSystemControl('reset_all_passwords', 'Password Reset for All Users')}
-                      disabled={systemControlLoading}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <Lock className="w-4 h-4 mr-2" />
-                      Reset All Passwords
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
+                      <div className="flex items-center gap-3">
+                        <RefreshCw className="w-5 h-5 text-destructive" />
+                        <div>
+                          <h4 className="font-semibold">System Restart</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Restart system services (causes brief downtime)
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        disabled={systemControlLoading}
+                        onClick={() => executeSystemControl('system_restart', 'System Restart')}
+                        className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        {systemControlLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Restart'}
+                      </Button>
+                    </div>
 
-                {/* Data Management */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Database className="w-5 h-5 text-secondary" />
-                      Data Management
-                    </CardTitle>
-                    <CardDescription>
-                      System data backup and maintenance
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button 
-                      onClick={() => executeSystemControl('backup_system_data', 'System Data Backup')}
-                      disabled={systemControlLoading}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Create System Backup
-                    </Button>
-                    <Button 
-                      onClick={() => executeSystemControl('purge_old_logs', 'Old Logs Purge')}
-                      disabled={systemControlLoading}
-                      className="w-full justify-start"
-                      variant="outline"
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Purge Old Logs
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
+                      <div className="flex items-center gap-3">
+                        <Trash2 className="w-5 h-5 text-destructive" />
+                        <div>
+                          <h4 className="font-semibold">Clear System Cache</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Clear all system caches and temporary data
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        disabled={systemControlLoading}
+                        onClick={() => executeSystemControl('clear_cache', 'Clear System Cache')}
+                        className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        {systemControlLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Clear Cache'}
+                      </Button>
+                    </div>
+                  </div>
 
-                {/* System Control Results */}
-                {systemControlResult && (
-                  <Card className="md:col-span-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Check className="w-5 h-5 text-success" />
-                        Operation Result
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <pre className="bg-muted p-4 rounded-lg text-sm overflow-auto max-h-64">
+                  {systemControlResult && (
+                    <div className="mt-6 p-4 bg-muted rounded-lg">
+                      <h4 className="font-semibold mb-2">Operation Result:</h4>
+                      <pre className="text-sm overflow-auto">
                         {JSON.stringify(systemControlResult, null, 2)}
                       </pre>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
           )}
         </Tabs>
-      </div>
 
-      {/* Configuration Dialogs */}
-      <SchoolConfig 
-        isOpen={schoolConfigOpen} 
-        onClose={() => setSchoolConfigOpen(false)} 
-      />
-      <IdCardConfig 
-        isOpen={idCardConfigOpen} 
-        onClose={() => setIdCardConfigOpen(false)} 
-      />
-      <SecurityConfig 
-        isOpen={securityConfigOpen} 
-        onClose={() => setSecurityConfigOpen(false)} 
-      />
-      <BackupConfig 
-        isOpen={backupConfigOpen} 
-        onClose={() => setBackupConfigOpen(false)} 
-      />
+        {/* Configuration Dialogs */}
+        <SchoolConfig 
+          isOpen={schoolConfigOpen} 
+          onClose={() => setSchoolConfigOpen(false)} 
+        />
+        <IdCardConfig 
+          isOpen={idCardConfigOpen} 
+          onClose={() => setIdCardConfigOpen(false)} 
+        />
+        <SecurityConfig 
+          isOpen={securityConfigOpen} 
+          onClose={() => setSecurityConfigOpen(false)} 
+        />
+        <BackupConfig 
+          isOpen={backupConfigOpen} 
+          onClose={() => setBackupConfigOpen(false)} 
+        />
+      </div>
     </div>
   );
 }

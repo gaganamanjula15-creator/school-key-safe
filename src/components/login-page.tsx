@@ -4,20 +4,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { UserCircle, GraduationCap, Users, Shield, Heart } from 'lucide-react';
+import { UserCircle, GraduationCap, Users, Shield, Heart, UserPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import schoolLogo from '@/assets/school-logo.png';
 import heroBg from '@/assets/hero-bg.jpg';
 
 type UserRole = 'student' | 'teacher' | 'admin' | 'parent';
 
 interface LoginPageProps {
-  onLogin: (role: UserRole, credentials: { email: string; password: string }) => void;
+  onSignup: () => void;
 }
 
-export function LoginPage({ onLogin }: LoginPageProps) {
-  const [selectedRole, setSelectedRole] = useState<UserRole>('student');
+export function LoginPage({ onSignup }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { signIn, loading } = useAuth();
 
   const roles = [
     {
@@ -46,9 +47,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(selectedRole, { email, password });
+    await signIn(email, password);
   };
 
   return (
@@ -75,35 +76,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-primary">Welcome Back</CardTitle>
             <CardDescription>
-              Choose your role and sign in to continue
+              Sign in to access your account
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* Role Selection */}
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Select Your Role</Label>
-              <div className="grid gap-2">
-                {roles.map((role) => (
-                  <Button
-                    key={role.value}
-                    variant={selectedRole === role.value ? "default" : "outline"}
-                    className={`p-4 h-auto justify-start ${
-                      selectedRole === role.value 
-                        ? 'bg-gradient-primary border-primary/50 text-white shadow-glow' 
-                        : 'hover:border-primary/50 hover:bg-accent'
-                    }`}
-                    onClick={() => setSelectedRole(role.value)}
-                  >
-                    <role.icon className="w-5 h-5 mr-3" />
-                    <div className="text-left">
-                      <div className="font-semibold">{role.label}</div>
-                      <div className="text-xs opacity-75">{role.description}</div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -135,13 +112,30 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               <Button 
                 type="submit" 
                 className="w-full bg-gradient-primary hover:bg-primary-light shadow-glow transition-smooth"
+                disabled={loading}
               >
-                Sign In as {roles.find(r => r.value === selectedRole)?.label}
+                {loading ? 'Signing In...' : 'Sign In'}
               </Button>
             </form>
 
-            <div className="text-center text-sm text-muted-foreground">
-              <p>Forgot your password? Contact administration</p>
+            <div className="space-y-4">
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Don't have an account?</p>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                className="w-full border-primary/20 hover:bg-primary/10 hover:border-primary/50"
+                onClick={onSignup}
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Register as Student/Parent
+              </Button>
+
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Teachers and Admins are added by administration</p>
+                <p>Forgot your password? Contact administration</p>
+              </div>
             </div>
           </CardContent>
         </Card>
