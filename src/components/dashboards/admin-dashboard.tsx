@@ -21,6 +21,7 @@ import { IdCardConfig } from '@/components/admin/id-card-config';
 import { SecurityConfig } from '@/components/admin/security-config';
 import { BackupConfig } from '@/components/admin/backup-config';
 import { useToast } from '@/hooks/use-toast';
+import { UserManagement } from '@/components/user-management';
 
 interface AdminData {
   name: string;
@@ -203,37 +204,7 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
 
           {/* Manage Users Tab */}
           <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  User Management
-                </CardTitle>
-                <CardDescription>
-                  Search and manage existing users
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Search by name, ID, or email..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button variant="outline" size="icon">
-                    <Search className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                <div className="text-center py-8 border border-dashed border-border rounded-lg">
-                  <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    Enter search criteria to find users
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <UserManagement />
           </TabsContent>
 
           {/* Bulk Operations Tab */}
