@@ -57,6 +57,20 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   const [systemControlLoading, setSystemControlLoading] = useState(false);
   const [systemControlResult, setSystemControlResult] = useState<any>(null);
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
+  const [systemStats, setSystemStats] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalAdmins: 0,
+    activeToday: 0,
+    pendingApprovals: 0
+  });
+  const [editStatsOpen, setEditStatsOpen] = useState(false);
+  const [editingStats, setEditingStats] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalAdmins: 0,
+    activeToday: 0
+  });
   const { toast } = useToast();
 
   // Check if current admin is Gagana Manjula (system owner) - using first and last name
@@ -65,9 +79,144 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
 
   useEffect(() => {
     fetchPendingUsers();
+    fetchSystemStats();
   }, []);
 
+  const fetchSystemStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_stats')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching system stats:', error);
+        return;
+      }
+
+      const stats = {
+        totalStudents: 0,
+        totalTeachers: 0,
+        totalAdmins: 0,
+        activeToday: 0,
+        pendingApprovals: pendingUsers.length
+      };
+
+      // Map database stats to component state
+      data?.forEach((stat: any) => {
+        switch (stat.stat_key) {
+          case 'total_students':
+            stats.totalStudents = stat.stat_value;
+            break;
+          case 'total_teachers':
+            stats.totalTeachers = stat.stat_value;
+            break;
+          case 'total_admins':
+            stats.totalAdmins = stat.stat_value;
+            break;
+          case 'active_today':
+            stats.activeToday = stat.stat_value;
+            break;
+        }
+      });
+
+      stats.pendingApprovals = pendingUsers.length;
+      setSystemStats(stats);
+      setEditingStats({
+        totalStudents: stats.totalStudents,
+        totalTeachers: stats.totalTeachers,
+        totalAdmins: stats.totalAdmins,
+        activeToday: stats.activeToday
+      });
+    } catch (error) {
+      console.error('Error fetching system stats:', error);
+    }
+  };
+
+  const updateSystemStats = async () => {
+    try {
+      const updates = [
+        { stat_key: 'total_students', stat_value: editingStats.totalStudents },
+        { stat_key: 'total_teachers', stat_value: editingStats.totalTeachers },
+        { stat_key: 'total_admins', stat_value: editingStats.totalAdmins },
+        { stat_key: 'active_today', stat_value: editingStats.activeToday }
+      ];
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('system_stats')
+          .upsert(update, { onConflict: 'stat_key' });
+
+        if (error) {
+          throw error;
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: "System statistics updated successfully",
+      });
+
+      setEditStatsOpen(false);
+      fetchSystemStats();
+    } catch (error) {
+      console.error('Error updating system stats:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update system statistics",
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchPendingUsers = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('approved', false);
+
+    if (error) {
+      console.error('Error fetching pending users:', error);
+      return;
+    }
+
+    setPendingUsers(data || []);
+  };
+
+  const updateSystemStats = async () => {
+    try {
+      const updates = [
+        { stat_key: 'total_students', stat_value: editingStats.totalStudents },
+        { stat_key: 'total_teachers', stat_value: editingStats.totalTeachers },
+        { stat_key: 'total_admins', stat_value: editingStats.totalAdmins },
+        { stat_key: 'active_today', stat_value: editingStats.activeToday }
+      ];
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('system_stats')
+          .upsert(update, { onConflict: 'stat_key' });
+
+        if (error) {
+          throw error;
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: "System statistics updated successfully",
+      });
+
+      setEditStatsOpen(false);
+      fetchSystemStats();
+    } catch (error) {
+      console.error('Error updating system stats:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update system statistics",
+        variant: "destructive",
+      });
+    }
+  };
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -127,16 +276,18 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
     });
 
     fetchPendingUsers(); // Refresh the list
+    fetchSystemStats(); // Refresh stats
   };
 
-  // Mock data for stats
-  const systemStats = {
-    totalStudents: 1247,
-    totalTeachers: 78,
-    totalAdmins: 5,
-    activeToday: 892,
-    pendingApprovals: pendingUsers.length
-  };
+  // Check if user can edit stats (admins and moderators)  
+  const canEditStats = true; // Allow all admins to edit stats
+
+  // Mock data for stats - now loaded from database
+  useEffect(() => {
+    if (pendingUsers.length >= 0) {
+      fetchSystemStats();
+    }
+  }, [pendingUsers]);
 
   const executeSystemControl = async (action: string, actionName: string) => {
     if (!isSystemOwner) {
@@ -204,7 +355,17 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
         {/* System Stats */}
         <div className="grid md:grid-cols-5 gap-4 mb-8">
           <Card className="border-primary/20 bg-gradient-card">
-            <CardContent className="p-4 text-center">
+            <CardContent className="p-4 text-center relative">
+              {canEditStats && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-1 right-1 h-6 w-6 p-0"
+                  onClick={() => setEditStatsOpen(true)}
+                >
+                  <Edit3 className="h-3 w-3" />
+                </Button>
+              )}
               <Users className="w-8 h-8 mx-auto mb-2 text-primary" />
               <p className="text-2xl font-bold">{systemStats.totalStudents}</p>
               <p className="text-sm text-muted-foreground">Total Students</p>
@@ -212,8 +373,18 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
           </Card>
           
           <Card className="border-secondary/20 bg-gradient-card">
-            <CardContent className="p-4 text-center">
-              <School className="w-8 h-8 mx-auto mb-2 text-secondary" />
+            <CardContent className="p-4 text-center relative">
+              {canEditStats && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-1 right-1 h-6 w-6 p-0"
+                  onClick={() => setEditStatsOpen(true)}
+                >
+                  <Edit3 className="h-3 w-3" />
+                </Button>
+              )}
+              <Users className="w-8 h-8 mx-auto mb-2 text-secondary" />
               <p className="text-2xl font-bold">{systemStats.totalTeachers}</p>
               <p className="text-sm text-muted-foreground">Total Teachers</p>
             </CardContent>
@@ -650,6 +821,86 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
           isOpen={backupConfigOpen} 
           onClose={() => setBackupConfigOpen(false)} 
         />
+
+        {/* Edit Statistics Dialog */}
+        <Dialog open={editStatsOpen} onOpenChange={setEditStatsOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Edit3 className="w-5 h-5" />
+                Edit System Statistics
+              </DialogTitle>
+              <DialogDescription>
+                Update the system statistics displayed on the dashboard. Only visible counts will be changed.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="totalStudents">Total Students</Label>
+                  <Input
+                    id="totalStudents"
+                    type="number"
+                    value={editingStats.totalStudents}
+                    onChange={(e) => setEditingStats(prev => ({ 
+                      ...prev, 
+                      totalStudents: parseInt(e.target.value) || 0 
+                    }))}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="totalTeachers">Total Teachers</Label>
+                  <Input
+                    id="totalTeachers"
+                    type="number"
+                    value={editingStats.totalTeachers}
+                    onChange={(e) => setEditingStats(prev => ({ 
+                      ...prev, 
+                      totalTeachers: parseInt(e.target.value) || 0 
+                    }))}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="totalAdmins">Total Admins</Label>
+                  <Input
+                    id="totalAdmins"
+                    type="number"
+                    value={editingStats.totalAdmins}
+                    onChange={(e) => setEditingStats(prev => ({ 
+                      ...prev, 
+                      totalAdmins: parseInt(e.target.value) || 0 
+                    }))}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="activeToday">Active Today</Label>
+                  <Input
+                    id="activeToday"
+                    type="number"
+                    value={editingStats.activeToday}
+                    onChange={(e) => setEditingStats(prev => ({ 
+                      ...prev, 
+                      activeToday: parseInt(e.target.value) || 0 
+                    }))}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setEditStatsOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={updateSystemStats} className="bg-gradient-primary">
+                Update Statistics
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

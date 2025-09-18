@@ -104,6 +104,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_stats: {
+        Row: {
+          created_at: string
+          id: string
+          stat_key: string
+          stat_value: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          stat_key: string
+          stat_value?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stat_key?: string
+          stat_value?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
