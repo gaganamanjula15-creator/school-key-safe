@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { UserCircle, GraduationCap, Users, Shield, Heart, UserPlus } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { UserCircle, GraduationCap, Users, Shield, Heart, UserPlus, ChevronDown, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import schoolLogo from '@/assets/school-logo.png';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -123,30 +124,65 @@ export function LoginPage({ onSignup }: LoginPageProps) {
                 <p>Don't have an account?</p>
               </div>
               
-              <div className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full border-primary/20 hover:bg-primary/10 hover:border-primary/50"
-                  onClick={onSignup}
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Register as Student/Parent
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full border-orange-200 hover:bg-orange/10 hover:border-orange/50 text-orange-700"
-                  onClick={onSignup}
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Register as System Moderator
-                </Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-primary/20 hover:bg-primary/10 hover:border-primary/50 justify-between"
+                  >
+                    <div className="flex items-center">
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Create New Account
+                    </div>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-card/95 backdrop-blur-sm border-primary/20 shadow-elegant z-50">
+                  <DropdownMenuItem 
+                    onClick={onSignup}
+                    className="flex items-center p-3 hover:bg-primary/10 cursor-pointer"
+                  >
+                    <GraduationCap className="w-4 h-4 mr-3 text-primary" />
+                    <div>
+                      <div className="font-medium">Student Account</div>
+                      <div className="text-xs text-muted-foreground">Access digital ID and services</div>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={onSignup}
+                    className="flex items-center p-3 hover:bg-primary/10 cursor-pointer"
+                  >
+                    <Heart className="w-4 h-4 mr-3 text-primary" />
+                    <div>
+                      <div className="font-medium">Parent Account</div>
+                      <div className="text-xs text-muted-foreground">Monitor child's progress</div>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={onSignup}
+                    className="flex items-center p-3 hover:bg-secondary/10 cursor-pointer"
+                  >
+                    <Shield className="w-4 h-4 mr-3 text-secondary" />
+                    <div>
+                      <div className="font-medium">System Moderator</div>
+                      <div className="text-xs text-muted-foreground">Administrative access</div>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-              <div className="text-center text-sm text-muted-foreground">
-                <p>Teachers and Admins are added by administration</p>
-                <p>All registrations require admin approval</p>
-                <p>Forgot your password? Contact administration</p>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="w-full text-muted-foreground hover:text-primary hover:bg-primary/5"
+              >
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Need Help? Contact Administration
+              </Button>
+
+              <div className="text-center text-xs text-muted-foreground space-y-1">
+                <p>Teachers added by administration only</p>
+                <p>All accounts require approval</p>
               </div>
             </div>
           </CardContent>
