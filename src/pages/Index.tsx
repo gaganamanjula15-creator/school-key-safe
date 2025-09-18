@@ -36,6 +36,8 @@ interface AdminData {
   name: string;
   id: string;
   email: string;
+  first_name: string;
+  last_name: string;
 }
 
 interface ParentData {
@@ -105,6 +107,10 @@ const Index = () => {
       }),
       ...(userProfile.role === 'parent' && {
         children: []
+      }),
+      ...(userProfile.role === 'admin' && {
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name
       })
     };
 

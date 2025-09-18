@@ -39,6 +39,8 @@ interface AdminData {
   name: string;
   id: string;
   email: string;
+  first_name: string;
+  last_name: string;
 }
 
 interface AdminDashboardProps {
@@ -57,8 +59,9 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
   const { toast } = useToast();
 
-  // Check if current admin is Gagana Manjula (system owner)
-  const isSystemOwner = admin.name === 'Gagana Manjula';
+  // Check if current admin is Gagana Manjula (system owner) - using first and last name
+  const isSystemOwner = (admin.name === 'Gagana Manjula') || 
+                        (admin.first_name === 'Gagana' && admin.last_name === 'Manjula');
 
   useEffect(() => {
     fetchPendingUsers();
@@ -152,7 +155,7 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
       const { data, error } = await supabase.functions.invoke('admin-system-control', {
         body: { 
           action,
-          adminName: admin.name // Send admin name for verification
+          adminName: `${admin.first_name} ${admin.last_name}` // Send full name for verification
         }
       });
 
