@@ -14,8 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          approved: boolean
           avatar_url: string | null
           created_at: string
           department: string | null
@@ -27,11 +46,13 @@ export type Database = {
           last_name: string | null
           phone: string | null
           role: string
+          signup_date: string | null
           student_number: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          approved?: boolean
           avatar_url?: string | null
           created_at?: string
           department?: string | null
@@ -43,11 +64,13 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           role?: string
+          signup_date?: string | null
           student_number?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          approved?: boolean
           avatar_url?: string | null
           created_at?: string
           department?: string | null
@@ -59,6 +82,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           role?: string
+          signup_date?: string | null
           student_number?: string | null
           updated_at?: string
           user_id?: string | null
