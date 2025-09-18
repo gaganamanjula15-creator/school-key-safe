@@ -1,6 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { StudentManagement } from "@/components/student-management";
+import { UserManagement } from "@/components/user-management";
 
 type UserRole = 'student' | 'teacher' | 'admin' | 'parent';
 
@@ -71,7 +71,7 @@ const Index = () => {
         <AppSidebar />
         
         <main className="flex-1 pt-12">
-          <StudentManagement />
+          <UserManagement />
         </main>
       </div>
     </SidebarProvider>
