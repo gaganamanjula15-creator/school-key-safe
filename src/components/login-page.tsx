@@ -123,17 +123,29 @@ export function LoginPage({ onSignup }: LoginPageProps) {
                 <p>Don't have an account?</p>
               </div>
               
-              <Button 
-                variant="outline" 
-                className="w-full border-primary/20 hover:bg-primary/10 hover:border-primary/50"
-                onClick={onSignup}
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Register as Student/Parent
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-primary/20 hover:bg-primary/10 hover:border-primary/50"
+                  onClick={onSignup}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Register as Student/Parent
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full border-orange-200 hover:bg-orange/10 hover:border-orange/50 text-orange-700"
+                  onClick={onSignup}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Register as System Moderator
+                </Button>
+              </div>
 
               <div className="text-center text-sm text-muted-foreground">
                 <p>Teachers and Admins are added by administration</p>
+                <p>All registrations require admin approval</p>
                 <p>Forgot your password? Contact administration</p>
               </div>
             </div>
