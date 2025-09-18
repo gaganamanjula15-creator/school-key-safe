@@ -249,11 +249,11 @@ export function SignupPage({ onBack }: SignupPageProps) {
             </form>
 
             <div className="text-center text-sm text-muted-foreground space-y-2">
-              <p>
+              <div>
                 <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
                   Admin Approval Required
                 </Badge>
-              </p>
+              </div>
               <p>Your account will be reviewed by administration before activation.</p>
             </div>
           </CardContent>
