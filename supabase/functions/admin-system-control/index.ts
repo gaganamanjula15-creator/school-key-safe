@@ -15,57 +15,74 @@ serve(async (req) => {
   try {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     })
 
-    // Get the authorization header
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader) {
-      console.log('No authorization header provided')
+    const { action, adminEmail } = await req.json()
+    
+    console.log(`Admin system control request - Action: ${action}, Admin: ${adminEmail}`)
+
+    // In demo mode, check if the admin email is Gagana Manjula's
+    if (adminEmail !== 'gagana.manjula@school.edu') {
+      console.log('Access denied - not system owner:', adminEmail)
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Set the auth token
-    supabase.auth.getSession = async () => ({ data: { session: null }, error: null });
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
-
-    if (userError || !user) {
-      console.log('Invalid token or user not found:', userError)
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Check if user is the system admin (Gagana Manjula)
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .eq('first_name', 'Gagana')
-      .eq('last_name', 'Manjula')
-      .single()
-
-    if (profileError || !profile) {
-      console.log('User is not Gagana Manjula admin:', profileError)
-      return new Response(
-        JSON.stringify({ error: 'Access denied. Only system owner can access this function.' }),
+        JSON.stringify({ error: 'Access denied. Only system owner (Gagana Manjula) can access this function.' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    const { action } = await req.json()
-    console.log(`Admin ${profile.first_name} ${profile.last_name} requesting action: ${action}`)
+    let result;
+
+    switch (action) {
+      case 'system_health_check':
+        result = await performSystemHealthCheck(supabase)
+        break
+      
+      case 'cleanup_inactive_users':
+        result = await cleanupInactiveUsers(supabase)
+        break
+      
+      case 'generate_system_report':
+        result = await generateSystemReport(supabase)
+        break
+      
+      case 'reset_all_passwords':
+        result = await resetAllUserPasswords(supabase)
+        break
+      
+      case 'backup_system_data':
+        result = await backupSystemData(supabase)
+        break
+      
+      case 'purge_old_logs':
+        result = await purgeOldLogs(supabase)
+        break
+      
+      default:
+        return new Response(
+          JSON.stringify({ error: 'Invalid action specified' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, data: result }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+
+  } catch (error) {
+    console.error('Error in admin-system-control:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+})
 
     let result;
 

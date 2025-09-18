@@ -94,7 +94,10 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
 
     try {
       const { data, error } = await supabase.functions.invoke('admin-system-control', {
-        body: { action }
+        body: { 
+          action,
+          adminEmail: admin.email
+        }
       });
 
       if (error) {
