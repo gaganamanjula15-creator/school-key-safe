@@ -14,57 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          department: string | null
-          email: string
-          first_name: string | null
-          grade: string | null
-          id: string
-          is_active: boolean
-          last_name: string | null
-          phone: string | null
-          role: string
-          student_number: string | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          department?: string | null
-          email: string
-          first_name?: string | null
-          grade?: string | null
-          id?: string
-          is_active?: boolean
-          last_name?: string | null
-          phone?: string | null
-          role?: string
-          student_number?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          department?: string | null
-          email?: string
-          first_name?: string | null
-          grade?: string | null
-          id?: string
-          is_active?: boolean
-          last_name?: string | null
-          phone?: string | null
-          role?: string
-          student_number?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       STUDENTS: {
         Row: {
           created_at: string
