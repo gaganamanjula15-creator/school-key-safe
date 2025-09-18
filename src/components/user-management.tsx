@@ -88,17 +88,17 @@ export function UserManagement() {
     try {
       setLoading(true);
       
-      // Try to fetch from profiles table with type assertion
-      const response = await fetch('/api/supabase-proxy?table=profiles&select=*&order=created_at.desc', {
-        method: 'GET',
-      });
+      // Use Supabase client with proper type handling
+      const { data, error } = await (supabase as any)
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
+      if (error) {
+        throw error;
       }
 
-      const data = await response.json();
-      setUsers(data || []);
+      setUsers((data as UserProfile[]) || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -232,28 +232,44 @@ export function UserManagement() {
       };
 
       if (editingUser) {
-        // Update existing user - for now just show success message
+        // Update existing user
+        const { error } = await (supabase as any)
+          .from('profiles')
+          .update({
+            email: userData.email,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            role: userData.role,
+            student_number: userData.student_number,
+            grade: userData.grade,
+            department: userData.department,
+            phone: userData.phone,
+            is_active: userData.is_active,
+          })
+          .eq('id', editingUser.id);
+
+        if (error) throw error;
+
         toast({
           title: 'Success',
-          description: 'User updated successfully (demo mode)',
+          description: 'User updated successfully',
         });
         setEditingUser(null);
+        fetchUsers();
       } else {
-        // Create new user - for now just show success message
+        // Create new user
+        const { error } = await (supabase as any)
+          .from('profiles')
+          .insert([userData]);
+
+        if (error) throw error;
+
         toast({
           title: 'Success',
-          description: 'User created successfully (demo mode)',
+          description: 'User created successfully',
         });
         setIsCreateDialogOpen(false);
-        
-        // Add to local state for demo
-        const newUser: UserProfile = {
-          id: Date.now().toString(),
-          ...userData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setUsers(prev => [newUser, ...prev]);
+        fetchUsers();
       }
 
       form.reset();
@@ -285,11 +301,18 @@ export function UserManagement() {
   const handleDelete = async (user: UserProfile) => {
     if (window.confirm(`Are you sure you want to delete ${user.first_name} ${user.last_name}?`)) {
       try {
+        const { error } = await (supabase as any)
+          .from('profiles')
+          .delete()
+          .eq('id', user.id);
+
+        if (error) throw error;
+
         toast({
           title: 'Success',
-          description: 'User deleted successfully (demo mode)',
+          description: 'User deleted successfully',
         });
-        setUsers(prev => prev.filter(u => u.id !== user.id));
+        fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
         toast({
@@ -303,13 +326,18 @@ export function UserManagement() {
 
   const toggleUserStatus = async (user: UserProfile) => {
     try {
+      const { error } = await (supabase as any)
+        .from('profiles')
+        .update({ is_active: !user.is_active })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
       toast({
         title: 'Success',
-        description: `User ${!user.is_active ? 'activated' : 'deactivated'} successfully (demo mode)`,
+        description: `User ${!user.is_active ? 'activated' : 'deactivated'} successfully`,
       });
-      setUsers(prev => prev.map(u => 
-        u.id === user.id ? { ...u, is_active: !u.is_active } : u
-      ));
+      fetchUsers();
     } catch (error) {
       console.error('Error updating user status:', error);
       toast({
