@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Shield, 
   Users, 
@@ -14,7 +15,14 @@ import {
   Check,
   X,
   BarChart3,
-  School
+  School,
+  Lock,
+  Activity,
+  Database,
+  RefreshCw,
+  Trash2,
+  Download,
+  AlertTriangle
 } from 'lucide-react';
 import { SchoolConfig } from '@/components/admin/school-config';
 import { IdCardConfig } from '@/components/admin/id-card-config';
@@ -22,6 +30,7 @@ import { SecurityConfig } from '@/components/admin/security-config';
 import { BackupConfig } from '@/components/admin/backup-config';
 import { useToast } from '@/hooks/use-toast';
 import { UserManagement } from '@/components/user-management';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminData {
   name: string;
@@ -40,7 +49,12 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   const [idCardConfigOpen, setIdCardConfigOpen] = useState(false);
   const [securityConfigOpen, setSecurityConfigOpen] = useState(false);
   const [backupConfigOpen, setBackupConfigOpen] = useState(false);
+  const [systemControlLoading, setSystemControlLoading] = useState(false);
+  const [systemControlResult, setSystemControlResult] = useState<any>(null);
   const { toast } = useToast();
+
+  // Check if current admin is Gagana Manjula (system owner)
+  const isSystemOwner = admin.name === 'Gagana Manjula';
 
   // Mock data
   const systemStats = {
@@ -63,6 +77,45 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
       title: approved ? "User Approved" : "User Rejected",
       description: `User registration has been ${approved ? 'approved' : 'rejected'}.`,
     });
+  };
+
+  const executeSystemControl = async (action: string, actionName: string) => {
+    if (!isSystemOwner) {
+      toast({
+        title: "Access Denied",
+        description: "Only the system owner can perform this action.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSystemControlLoading(true);
+    setSystemControlResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-system-control', {
+        body: { action }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setSystemControlResult(data.data);
+      toast({
+        title: "Success",
+        description: `${actionName} completed successfully.`,
+      });
+    } catch (error) {
+      console.error('System control error:', error);
+      toast({
+        title: "Error",
+        description: `Failed to execute ${actionName}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setSystemControlLoading(false);
+    }
   };
 
   return (
@@ -130,11 +183,12 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
         </div>
 
         <Tabs defaultValue="approvals" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="approvals">User Approvals</TabsTrigger>
             <TabsTrigger value="users">Manage Users</TabsTrigger>
             <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
             <TabsTrigger value="settings">System Settings</TabsTrigger>
+            {isSystemOwner && <TabsTrigger value="control">System Control</TabsTrigger>}
           </TabsList>
 
           {/* User Approvals Tab */}
@@ -446,6 +500,137 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* System Control Tab - Only for Gagana Manjula */}
+          {isSystemOwner && (
+            <TabsContent value="control" className="space-y-6">
+              <Alert className="border-warning bg-warning/5">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>System Owner Access:</strong> These functions are restricted to the system owner (Gagana Manjula) only.
+                  Use with caution as they affect the entire system.
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* System Health */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-success" />
+                      System Health
+                    </CardTitle>
+                    <CardDescription>
+                      Monitor system performance and health metrics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button 
+                      onClick={() => executeSystemControl('system_health_check', 'System Health Check')}
+                      disabled={systemControlLoading}
+                      className="w-full justify-start"
+                      variant="outline"
+                    >
+                      <Activity className="w-4 h-4 mr-2" />
+                      Run Health Check
+                    </Button>
+                    <Button 
+                      onClick={() => executeSystemControl('generate_system_report', 'System Report Generation')}
+                      disabled={systemControlLoading}
+                      className="w-full justify-start"
+                      variant="outline"
+                    >
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Generate System Report
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* User Management */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-primary" />
+                      User Management
+                    </CardTitle>
+                    <CardDescription>
+                      Advanced user management operations
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button 
+                      onClick={() => executeSystemControl('cleanup_inactive_users', 'Inactive User Cleanup')}
+                      disabled={systemControlLoading}
+                      className="w-full justify-start"
+                      variant="outline"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Cleanup Inactive Users
+                    </Button>
+                    <Button 
+                      onClick={() => executeSystemControl('reset_all_passwords', 'Password Reset for All Users')}
+                      disabled={systemControlLoading}
+                      className="w-full justify-start"
+                      variant="outline"
+                    >
+                      <Lock className="w-4 h-4 mr-2" />
+                      Reset All Passwords
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Data Management */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Database className="w-5 h-5 text-secondary" />
+                      Data Management
+                    </CardTitle>
+                    <CardDescription>
+                      System data backup and maintenance
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button 
+                      onClick={() => executeSystemControl('backup_system_data', 'System Data Backup')}
+                      disabled={systemControlLoading}
+                      className="w-full justify-start"
+                      variant="outline"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Create System Backup
+                    </Button>
+                    <Button 
+                      onClick={() => executeSystemControl('purge_old_logs', 'Old Logs Purge')}
+                      disabled={systemControlLoading}
+                      className="w-full justify-start"
+                      variant="outline"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Purge Old Logs
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* System Control Results */}
+                {systemControlResult && (
+                  <Card className="md:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Check className="w-5 h-5 text-success" />
+                        Operation Result
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="bg-muted p-4 rounded-lg text-sm overflow-auto max-h-64">
+                        {JSON.stringify(systemControlResult, null, 2)}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
