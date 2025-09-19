@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { 
   CalendarDays, 
   Download, 
@@ -121,6 +122,7 @@ export function EnhancedStudentDashboard({ student, onLogout }: EnhancedStudentD
               <Badge variant="outline" className="text-sm">
                 Class {student.class}
               </Badge>
+              <ThemeToggle />
               <Button variant="outline" onClick={onLogout}>
                 Sign Out
               </Button>

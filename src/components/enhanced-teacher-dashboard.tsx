@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { 
   Users, 
   QrCode, 
@@ -139,6 +140,7 @@ export function EnhancedTeacherDashboard({ teacher, onLogout }: EnhancedTeacherD
               <Badge variant="outline" className="text-sm">
                 {teacher.classes.length} Classes
               </Badge>
+              <ThemeToggle />
               <Button variant="outline" onClick={onLogout}>
                 Sign Out
               </Button>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { 
   Heart, 
   LogOut, 
@@ -79,14 +80,17 @@ export function ParentDashboard({ parent, onLogout }: ParentDashboardProps) {
                 <p className="text-sm text-muted-foreground">Welcome back, {parent.name}</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={onLogout}
-              className="gap-2 hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <Button 
+                variant="outline" 
+                onClick={onLogout}
+                className="gap-2 hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>

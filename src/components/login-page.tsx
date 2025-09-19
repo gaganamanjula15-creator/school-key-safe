@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserCircle, GraduationCap, Users, Shield, Heart, UserPlus, ChevronDown, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeToggle } from '@/components/theme-toggle';
 import schoolLogo from '@/assets/school-logo.png';
 import heroBg from '@/assets/hero-bg.jpg';
 
@@ -74,7 +75,10 @@ export function LoginPage({ onSignup }: LoginPageProps) {
         </div>
 
         <Card className="shadow-elegant border-white/20 bg-white/95 backdrop-blur-sm">
-          <CardHeader className="text-center">
+          <CardHeader className="text-center relative">
+            <div className="absolute top-4 right-4">
+              <ThemeToggle />
+            </div>
             <CardTitle className="text-2xl text-primary">Welcome Back</CardTitle>
             <CardDescription>
               Sign in to access your account

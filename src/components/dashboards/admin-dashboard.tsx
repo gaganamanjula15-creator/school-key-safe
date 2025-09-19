@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { 
   Shield, 
   Users, 
@@ -300,9 +301,12 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
               </p>
             </div>
           </div>
-          <Button variant="outline" onClick={onLogout}>
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Button variant="outline" onClick={onLogout}>
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 
