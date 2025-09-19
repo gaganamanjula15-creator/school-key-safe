@@ -185,7 +185,6 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
 
     setPendingUsers(data || []);
   };
-  };
 
   const handleApproveUser = async (userId: string) => {
     const { error } = await supabase
