@@ -158,16 +158,6 @@ export function LoginPage({ onSignup }: LoginPageProps) {
                       <div className="text-xs text-muted-foreground">Monitor child's progress</div>
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={onSignup}
-                    className="flex items-center p-3 hover:bg-secondary/10 cursor-pointer"
-                  >
-                    <Shield className="w-4 h-4 mr-3 text-secondary" />
-                    <div>
-                      <div className="font-medium">System Moderator</div>
-                      <div className="text-xs text-muted-foreground">Administrative access</div>
-                    </div>
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
