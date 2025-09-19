@@ -25,8 +25,11 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  Edit3
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { SchoolConfig } from '@/components/admin/school-config';
 import { IdCardConfig } from '@/components/admin/id-card-config';
 import { SecurityConfig } from '@/components/admin/security-config';
@@ -172,54 +175,6 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('approved', false);
-
-    if (error) {
-      console.error('Error fetching pending users:', error);
-      return;
-    }
-
-    setPendingUsers(data || []);
-  };
-
-  const updateSystemStats = async () => {
-    try {
-      const updates = [
-        { stat_key: 'total_students', stat_value: editingStats.totalStudents },
-        { stat_key: 'total_teachers', stat_value: editingStats.totalTeachers },
-        { stat_key: 'total_admins', stat_value: editingStats.totalAdmins },
-        { stat_key: 'active_today', stat_value: editingStats.activeToday }
-      ];
-
-      for (const update of updates) {
-        const { error } = await supabase
-          .from('system_stats')
-          .upsert(update, { onConflict: 'stat_key' });
-
-        if (error) {
-          throw error;
-        }
-      }
-
-      toast({
-        title: "Success",
-        description: "System statistics updated successfully",
-      });
-
-      setEditStatsOpen(false);
-      fetchSystemStats();
-    } catch (error) {
-      console.error('Error updating system stats:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update system statistics",
-        variant: "destructive",
-      });
-    }
-  };
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
       .eq('approved', false)
       .order('created_at', { ascending: false });
 
@@ -229,6 +184,7 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
     }
 
     setPendingUsers(data || []);
+  };
   };
 
   const handleApproveUser = async (userId: string) => {
