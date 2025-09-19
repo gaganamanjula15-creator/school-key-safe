@@ -152,6 +152,16 @@ export function LoginPage({ onSignup }: LoginPageProps) {
                     onClick={onSignup}
                     className="flex items-center p-3 hover:bg-primary/10 cursor-pointer"
                   >
+                    <Users className="w-4 h-4 mr-3 text-primary" />
+                    <div>
+                      <div className="font-medium">Teacher Account</div>
+                      <div className="text-xs text-muted-foreground">Manage classes and attendance</div>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={onSignup}
+                    className="flex items-center p-3 hover:bg-primary/10 cursor-pointer"
+                  >
                     <Heart className="w-4 h-4 mr-3 text-primary" />
                     <div>
                       <div className="font-medium">Parent Account</div>
