@@ -8,6 +8,7 @@ interface AuthContextType {
   session: Session | null;
   userProfile: any | null;
   loading: boolean;
+  justLoggedIn: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
   signUp: (email: string, password: string, userData: any) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
@@ -28,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,6 +38,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Set justLoggedIn flag for SIGN_IN event
+        if (event === 'SIGNED_IN' && session?.user) {
+          setJustLoggedIn(true);
+        } else if (event === 'SIGNED_OUT') {
+          setJustLoggedIn(false);
+        }
         
         if (session?.user) {
           // Fetch user profile after successful authentication
@@ -160,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     setLoading(true);
+    setJustLoggedIn(false);
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -172,6 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     userProfile,
     loading,
+    justLoggedIn,
     signIn,
     signUp,
     signOut,
