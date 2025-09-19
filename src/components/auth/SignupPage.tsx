@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, GraduationCap, Heart, Shield } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Heart, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import schoolLogo from '@/assets/school-logo.png';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -22,7 +22,7 @@ export function SignupPage({ onBack }: SignupPageProps) {
     lastName: '',
     studentNumber: '',
     grade: '',
-    role: 'student' as 'student' | 'parent' | 'moderator'
+    role: 'student' as 'student' | 'parent' | 'teacher'
   });
   
   const { signUp, loading } = useAuth();
@@ -35,16 +35,16 @@ export function SignupPage({ onBack }: SignupPageProps) {
       description: 'Register as a student'
     },
     {
+      value: 'teacher' as const,
+      label: 'Teacher',
+      icon: Users,
+      description: 'Register as a teacher'
+    },
+    {
       value: 'parent' as const,
       label: 'Parent',
       icon: Heart,
       description: 'Register as a parent'
-    },
-    {
-      value: 'moderator' as const,
-      label: 'System Moderator',
-      icon: Shield,
-      description: 'Register as a system moderator'
     }
   ];
 
