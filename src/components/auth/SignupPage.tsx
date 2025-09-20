@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, GraduationCap, Heart, Users } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Heart, Users, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import schoolLogo from '@/assets/school-logo.png';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -24,6 +24,7 @@ export function SignupPage({ onBack }: SignupPageProps) {
     grade: '',
     role: 'student' as 'student' | 'parent' | 'teacher'
   });
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   
   const { signUp, loading } = useAuth();
 
@@ -68,7 +69,7 @@ export function SignupPage({ onBack }: SignupPageProps) {
     const { error } = await signUp(formData.email, formData.password, userData);
     
     if (!error) {
-      onBack(); // Go back to login page after successful signup
+      setShowSuccessOverlay(true);
     }
   };
 
@@ -83,6 +84,34 @@ export function SignupPage({ onBack }: SignupPageProps) {
     >
       {/* Overlay */}
       <div className="absolute inset-0 bg-gradient-primary opacity-90" />
+      
+      {/* Success Overlay */}
+      {showSuccessOverlay && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in-0 duration-300">
+          <Card className="w-full max-w-md mx-4 shadow-elegant border-white/20 bg-white/95 backdrop-blur-sm animate-in zoom-in-95 duration-300">
+            <CardContent className="p-8 text-center space-y-6">
+              <div className="flex justify-center">
+                <CheckCircle2 className="w-16 h-16 text-green-500" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-primary">Registration Successful!</h2>
+                <p className="text-muted-foreground">
+                  Your account has been created successfully. Please wait for admin approval to activate your account.
+                </p>
+              </div>
+              <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
+                Pending Admin Approval
+              </Badge>
+              <Button 
+                onClick={onBack}
+                className="w-full bg-gradient-primary hover:bg-primary-light shadow-glow transition-smooth"
+              >
+                Back to Login
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <div className="relative z-10 w-full max-w-md px-4">
         {/* School Branding */}
