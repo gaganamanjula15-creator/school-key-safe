@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { HomeworkReview } from '@/components/homework-review';
 import { Announcements } from '@/components/announcements';
+import { ClassManagement } from '@/components/class-management';
+import { AttendanceTracker } from '@/components/attendance-tracker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -257,126 +259,12 @@ export function EnhancedTeacherDashboard({ teacher, onLogout }: EnhancedTeacherD
 
           {/* Attendance Tab */}
           <TabsContent value="attendance" className="space-y-6 animate-fade-in">
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* QR Scanner Section */}
-              <Card className="border-primary/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <QrCode className="w-5 h-5" />
-                    QR Code Scanner
-                  </CardTitle>
-                  <CardDescription>
-                    Scan student QR codes to mark attendance
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="aspect-square bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border hover:border-primary/50 transition-smooth">
-                    <div className="text-center">
-                      <QrCode className="w-16 h-16 mx-auto text-muted-foreground mb-4 animate-pulse" />
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Point camera at student QR code
-                      </p>
-                      <Button 
-                        onClick={handleQRScan}
-                        className="bg-gradient-primary shadow-glow"
-                      >
-                        Start Scanning
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {scanResult && (
-                    <div className="p-3 bg-success/10 border border-success/20 rounded-lg animate-fade-in">
-                      <p className="text-sm text-success font-medium">
-                        ✓ {scanResult}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Manual Attendance */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Manual Attendance
-                  </CardTitle>
-                  <CardDescription>
-                    Mark attendance manually if needed
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Search students..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button variant="outline" size="icon">
-                      <Search className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {mockStudents.map((student) => (
-                      <div 
-                        key={student.id} 
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer"
-                      >
-                        <div>
-                          <p className="font-medium">{student.name}</p>
-                          <p className="text-sm text-muted-foreground">{student.id} • {student.class}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">
-                            {student.time}
-                          </span>
-                          <Badge 
-                            variant={student.status === 'present' ? 'default' : 'destructive'}
-                            className="text-xs cursor-pointer hover:opacity-80"
-                          >
-                            {student.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <AttendanceTracker />
           </TabsContent>
 
           {/* Classes Tab */}
           <TabsContent value="classes" className="space-y-6 animate-fade-in">
-            <div className="grid gap-4">
-              {teacher.classes.map((cls) => (
-                <Card key={cls.id} className="hover:shadow-card transition-all duration-200 cursor-pointer group">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                          {cls.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {cls.students} students • {cls.schedule}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-colors">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          Take Attendance
-                        </Button>
-                        <Button variant="outline" size="sm" className="hover:bg-secondary hover:text-secondary-foreground transition-colors">
-                          View Students
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <ClassManagement />
           </TabsContent>
 
           {/* Homework Tab */}

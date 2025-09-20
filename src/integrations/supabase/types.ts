@@ -32,6 +32,139 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_records: {
+        Row: {
+          attendance_date: string
+          class_id: string
+          id: string
+          marked_at: string
+          marked_by: string
+          notes: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          attendance_date?: string
+          class_id: string
+          id?: string
+          marked_at?: string
+          marked_by: string
+          notes?: string | null
+          status: string
+          student_id: string
+        }
+        Update: {
+          attendance_date?: string
+          class_id?: string
+          id?: string
+          marked_at?: string
+          marked_by?: string
+          notes?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_enrollments: {
+        Row: {
+          class_id: string
+          enrolled_at: string
+          id: string
+          is_active: boolean
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          enrolled_at?: string
+          id?: string
+          is_active?: boolean
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          enrolled_at?: string
+          id?: string
+          is_active?: boolean
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          class_code: string
+          created_at: string
+          grade_level: string
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_code?: string
+          created_at?: string
+          grade_level: string
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_code?: string
+          created_at?: string
+          grade_level?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parent_student_relationships: {
+        Row: {
+          created_at: string
+          id: string
+          parent_id: string
+          relationship_type: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parent_id: string
+          relationship_type?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parent_id?: string
+          relationship_type?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approved: boolean
