@@ -54,10 +54,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .from('profiles')
                 .select('*')
                 .eq('user_id', session.user.id)
-                .single();
+                .maybeSingle();
 
               if (error) {
                 console.error('Error fetching profile:', error);
+                return;
+              }
+              
+              if (!profile) {
+                console.log('No profile found for user');
                 return;
               }
 
