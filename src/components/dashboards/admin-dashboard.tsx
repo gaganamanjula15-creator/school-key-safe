@@ -84,46 +84,55 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   useEffect(() => {
     fetchPendingUsers();
     fetchSystemStats();
+
+    // Set up real-time subscription for profile changes
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          fetchSystemStats();
+          fetchPendingUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchSystemStats = async () => {
     try {
-      const { data, error } = await supabase
-        .from('system_stats')
-        .select('*');
+      // Get real counts from profiles table
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('role, is_active')
+        .eq('is_active', true);
 
-      if (error) {
-        console.error('Error fetching system stats:', error);
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
         return;
       }
 
+      // Count users by role
+      const studentCount = profilesData?.filter(p => p.role === 'student').length || 0;
+      const teacherCount = profilesData?.filter(p => p.role === 'teacher').length || 0;
+      const adminCount = profilesData?.filter(p => p.role === 'admin').length || 0;
+
       const stats = {
-        totalStudents: 0,
-        totalTeachers: 0,
-        totalAdmins: 0,
-        activeToday: 0,
+        totalStudents: studentCount,
+        totalTeachers: teacherCount,
+        totalAdmins: adminCount,
+        activeToday: 0, // This would need attendance tracking to be accurate
         pendingApprovals: pendingUsers.length
       };
 
-      // Map database stats to component state
-      data?.forEach((stat: any) => {
-        switch (stat.stat_key) {
-          case 'total_students':
-            stats.totalStudents = stat.stat_value;
-            break;
-          case 'total_teachers':
-            stats.totalTeachers = stat.stat_value;
-            break;
-          case 'total_admins':
-            stats.totalAdmins = stat.stat_value;
-            break;
-          case 'active_today':
-            stats.activeToday = stat.stat_value;
-            break;
-        }
-      });
-
-      stats.pendingApprovals = pendingUsers.length;
       setSystemStats(stats);
       setEditingStats({
         totalStudents: stats.totalStudents,
