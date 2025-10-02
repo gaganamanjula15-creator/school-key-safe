@@ -68,7 +68,7 @@ export function LoginPage({ onSignup }: LoginPageProps) {
           <div className="flex items-center justify-center gap-3 mb-4">
             <img src={schoolLogo} alt="School Logo" className="w-16 h-16" />
             <div className="text-white">
-              <h1 className="text-2xl font-bold">Digital ID System</h1>
+              <h1 className="text-2xl font-bold">R/KARAGASTHALAWA DIGITAL SYSTEM</h1>
               <p className="text-sm opacity-90">Secure School Identification</p>
             </div>
           </div>
