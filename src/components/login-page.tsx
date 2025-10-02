@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { UserCircle, GraduationCap, Users, Shield, Heart, UserPlus, ChevronDown, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useNavigate } from 'react-router-dom';
 import schoolLogo from '@/assets/school-logo.png';
 import heroBg from '@/assets/hero-bg.jpg';
 
@@ -18,6 +19,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onSignup }: LoginPageProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { signIn, loading } = useAuth();
@@ -178,6 +180,7 @@ export function LoginPage({ onSignup }: LoginPageProps) {
               <Button 
                 variant="ghost" 
                 size="sm"
+                onClick={() => navigate('/help')}
                 className="w-full text-muted-foreground hover:text-primary hover:bg-primary/5"
               >
                 <HelpCircle className="w-4 h-4 mr-2" />
