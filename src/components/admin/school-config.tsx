@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { School, Upload, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SchoolConfigProps {
   isOpen: boolean;
@@ -36,20 +37,72 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
   });
 
   const [isModified, setIsModified] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadSchoolConfig();
+    }
+  }, [isOpen]);
+
+  const loadSchoolConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('school_config')
+        .select('config_value')
+        .eq('config_key', 'school_info')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data?.config_value) {
+        setSchoolInfo(data.config_value as unknown as SchoolInfo);
+      }
+    } catch (error) {
+      console.error('Error loading school config:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load school configuration",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleInputChange = (field: keyof SchoolInfo, value: string) => {
     setSchoolInfo(prev => ({ ...prev, [field]: value }));
     setIsModified(true);
   };
 
-  const handleSave = () => {
-    // In a real app, this would save to backend
-    console.log('Saving school information:', schoolInfo);
-    toast({
-      title: "Settings Saved",
-      description: "School information has been updated successfully.",
-    });
-    setIsModified(false);
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('school_config')
+        .upsert({
+          config_key: 'school_info',
+          config_value: schoolInfo as any,
+          updated_by: user?.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Settings Saved",
+        description: "School information has been updated successfully.",
+      });
+      setIsModified(false);
+    } catch (error) {
+      console.error('Error saving school config:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save school configuration",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogoUpload = () => {
@@ -178,11 +231,11 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
           </Button>
           <Button 
             onClick={handleSave} 
-            disabled={!isModified}
+            disabled={!isModified || loading}
             className={isModified ? "bg-success hover:bg-success/90 text-success-foreground" : ""}
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Changes
+            {loading ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>
       </DialogContent>
