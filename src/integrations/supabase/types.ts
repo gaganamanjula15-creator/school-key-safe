@@ -89,6 +89,51 @@ export type Database = {
         }
         Relationships: []
       }
+      announcements: {
+        Row: {
+          author_id: string
+          author_name: string
+          content: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          target_audience: string
+          title: string
+          type: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          author_id: string
+          author_name: string
+          content: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          target_audience?: string
+          title: string
+          type?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          content?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          target_audience?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           attendance_date: string

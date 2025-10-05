@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,37 +17,31 @@ import {
   Megaphone,
   Clock,
   Eye,
-  Trash2
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Announcement {
   id: string;
   title: string;
   content: string;
   type: 'general' | 'urgent' | 'event' | 'academic';
-  targetAudience: 'all' | 'students' | 'teachers' | 'parents';
-  author: string;
-  createdAt: string;
-  expiresAt?: string;
-  isActive: boolean;
-  viewCount: number;
+  target_audience: 'all' | 'students' | 'teachers' | 'parents';
+  author_name: string;
+  created_at: string;
+  expires_at?: string;
+  is_active: boolean;
+  view_count: number;
 }
 
-interface AnnouncementsProps {
-  announcements: Announcement[];
-  userRole: 'student' | 'teacher' | 'admin';
-  onCreateAnnouncement?: (announcement: Omit<Announcement, 'id' | 'author' | 'createdAt' | 'viewCount'>) => void;
-  onDeleteAnnouncement?: (id: string) => void;
-}
-
-export function Announcements({ 
-  announcements, 
-  userRole, 
-  onCreateAnnouncement,
-  onDeleteAnnouncement 
-}: AnnouncementsProps) {
+export function Announcements() {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -56,6 +50,9 @@ export function Announcements({
     expiresAt: ''
   });
   const { toast } = useToast();
+  const { user, userProfile } = useAuth();
+
+  const userRole = userProfile?.role || 'student';
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -75,7 +72,54 @@ export function Announcements({
     }
   };
 
-  const handleCreateAnnouncement = () => {
+  // Fetch announcements
+  useEffect(() => {
+    fetchAnnouncements();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel('announcements-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'announcements'
+        },
+        () => {
+          fetchAnnouncements();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAnnouncements((data as any[]) || []);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load announcements",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateAnnouncement = async () => {
     if (!formData.title.trim() || !formData.content.trim()) {
       toast({
         title: "Error",
@@ -85,41 +129,100 @@ export function Announcements({
       return;
     }
 
-    const newAnnouncement = {
-      ...formData,
-      isActive: true
-    };
+    if (!user || !userProfile) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create announcements",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    onCreateAnnouncement?.(newAnnouncement);
-    
-    // Reset form
-    setFormData({
-      title: '',
-      content: '',
-      type: 'general',
-      targetAudience: 'all',
-      expiresAt: ''
-    });
-    setShowCreateForm(false);
-    
-    toast({
-      title: "Success!",
-      description: "Announcement created successfully"
-    });
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .insert({
+          title: formData.title.trim(),
+          content: formData.content.trim(),
+          type: formData.type,
+          target_audience: formData.targetAudience,
+          expires_at: formData.expiresAt || null,
+          author_id: user.id,
+          author_name: `${userProfile.first_name} ${userProfile.last_name}`.trim() || userProfile.email,
+          is_active: true,
+          view_count: 0
+        });
+
+      if (error) throw error;
+
+      // Reset form
+      setFormData({
+        title: '',
+        content: '',
+        type: 'general',
+        targetAudience: 'all',
+        expiresAt: ''
+      });
+      setShowCreateForm(false);
+
+      toast({
+        title: "Success!",
+        description: "Announcement created successfully"
+      });
+    } catch (error) {
+      console.error('Error creating announcement:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create announcement",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: "Announcement deleted successfully"
+      });
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete announcement",
+        variant: "destructive"
+      });
+    }
   };
 
   const canCreateAnnouncements = userRole === 'admin' || userRole === 'teacher';
-  const filteredAnnouncements = announcements
-    .filter(ann => ann.isActive)
-    .filter(ann => {
-      if (ann.targetAudience === 'all') return true;
-      if (userRole === 'admin') return true;
-      // Match user role with target audience
-      if (userRole === 'student' && ann.targetAudience === 'students') return true;
-      if (userRole === 'teacher' && ann.targetAudience === 'teachers') return true;
-      return false;
-    })
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const filteredAnnouncements = announcements.filter(ann => {
+    if (ann.target_audience === 'all') return true;
+    if (userRole === 'admin') return true;
+    // Match user role with target audience
+    if (userRole === 'student' && ann.target_audience === 'students') return true;
+    if (userRole === 'teacher' && ann.target_audience === 'teachers') return true;
+    if (userRole === 'parent' && ann.target_audience === 'parents') return true;
+    return false;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -139,6 +242,7 @@ export function Announcements({
           <Button 
             onClick={() => setShowCreateForm(!showCreateForm)}
             className="bg-gradient-primary"
+            disabled={submitting}
           >
             <Plus className="w-4 h-4 mr-2" />
             New Announcement
@@ -229,11 +333,28 @@ export function Announcements({
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleCreateAnnouncement} className="bg-gradient-primary">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Publish Announcement
+              <Button 
+                onClick={handleCreateAnnouncement} 
+                className="bg-gradient-primary"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Publishing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Publish Announcement
+                  </>
+                )}
               </Button>
-              <Button variant="outline" onClick={() => setShowCreateForm(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCreateForm(false)}
+                disabled={submitting}
+              >
                 Cancel
               </Button>
             </div>
@@ -277,7 +398,7 @@ export function Announcements({
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => onDeleteAnnouncement?.(announcement.id)}
+                        onClick={() => handleDeleteAnnouncement(announcement.id)}
                         className="text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -295,27 +416,27 @@ export function Announcements({
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      <span className="capitalize">{announcement.targetAudience}</span>
+                      <span className="capitalize">{announcement.target_audience}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Eye className="w-4 h-4" />
-                      <span>{announcement.viewCount} views</span>
+                      <span>{announcement.view_count} views</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      <span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
+                      <span>{new Date(announcement.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                   
                   <div className="text-sm text-muted-foreground">
-                    By {announcement.author}
+                    By {announcement.author_name}
                   </div>
                 </div>
                 
-                {announcement.expiresAt && (
+                {announcement.expires_at && (
                   <div className="mt-2 text-sm text-warning flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    Expires: {new Date(announcement.expiresAt).toLocaleDateString()}
+                    Expires: {new Date(announcement.expires_at).toLocaleDateString()}
                   </div>
                 )}
               </CardContent>

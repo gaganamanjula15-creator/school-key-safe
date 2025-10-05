@@ -360,10 +360,7 @@ export function EnhancedStudentDashboard({ student, onLogout }: EnhancedStudentD
 
           {/* Announcements Tab */}
           <TabsContent value="announcements" className="animate-fade-in">
-            <Announcements 
-              announcements={announcements}
-              userRole="student"
-            />
+            <Announcements />
           </TabsContent>
         </Tabs>
       </div>

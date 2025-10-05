@@ -334,11 +334,7 @@ export function EnhancedTeacherDashboard({ teacher, onLogout }: EnhancedTeacherD
 
           {/* Announcements Tab */}
           <TabsContent value="announcements" className="animate-fade-in">
-            <Announcements 
-              announcements={announcements}
-              userRole="teacher"
-              onCreateAnnouncement={handleCreateAnnouncement}
-            />
+            <Announcements />
           </TabsContent>
         </Tabs>
       </div>
