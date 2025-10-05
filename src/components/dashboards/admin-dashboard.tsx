@@ -255,24 +255,12 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   }, [pendingUsers]);
 
   const executeSystemControl = async (action: string, actionName: string) => {
-    if (!isSystemOwner) {
-      toast({
-        title: "Access Denied",
-        description: "Only the system owner can perform this action.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setSystemControlLoading(true);
     setSystemControlResult(null);
 
     try {
       const { data, error } = await supabase.functions.invoke('admin-system-control', {
-        body: { 
-          action,
-          adminName: `${admin.first_name} ${admin.last_name}` // Send full name for verification
-        }
+        body: { action }
       });
 
       if (error) {
@@ -284,11 +272,11 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
         title: "Success",
         description: `${actionName} completed successfully.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('System control error:', error);
       toast({
         title: "Error",
-        description: `Failed to execute ${actionName}.`,
+        description: error?.message || `Failed to execute ${actionName}.`,
         variant: "destructive",
       });
     } finally {
@@ -671,14 +659,14 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
             </Card>
           </TabsContent>
 
-          {/* System Control Tab - Only for System Owner */}
+          {/* System Control Tab - Only for Admins */}
           {isSystemOwner && (
             <TabsContent value="control" className="space-y-6">
-              <Alert className="border-destructive/20 bg-destructive/5">
+              <Alert className="border-warning/20 bg-warning/5">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Restricted Access:</strong> This section is only available to the system owner (Gagana Manjula). 
-                  These actions can affect the entire system and should be used with extreme caution.
+                  <strong>Admin Access:</strong> These system operations can affect the entire platform. 
+                  Use with caution and ensure you understand the impact of each action.
                 </AlertDescription>
               </Alert>
 
