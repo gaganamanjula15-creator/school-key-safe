@@ -79,6 +79,7 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   });
   const [isVerified, setIsVerified] = useState(false);
   const [showVerificationDialog, setShowVerificationDialog] = useState(true);
+  const [isDashboardReady, setIsDashboardReady] = useState(false);
   const { toast } = useToast();
 
   // Check if current admin is Gagana Manjula (system owner) - using first and last name
@@ -86,30 +87,33 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                         (admin.first_name === 'Gagana' && admin.last_name === 'Manjula');
 
   useEffect(() => {
-    fetchPendingUsers();
-    fetchSystemStats();
+    // Only fetch data if verified and ready
+    if (isVerified && isDashboardReady) {
+      fetchPendingUsers();
+      fetchSystemStats();
 
-    // Set up real-time subscription for profile changes
-    const channel = supabase
-      .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles'
-        },
-        () => {
-          fetchSystemStats();
-          fetchPendingUsers();
-        }
-      )
-      .subscribe();
+      // Set up real-time subscription for profile changes
+      const channel = supabase
+        .channel('profile-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles'
+          },
+          () => {
+            fetchSystemStats();
+            fetchPendingUsers();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [isVerified, isDashboardReady]);
 
   const fetchSystemStats = async () => {
     try {
@@ -288,12 +292,21 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
     }
   };
 
-  const handleVerificationSuccess = () => {
+  const handleVerificationSuccess = async () => {
     setIsVerified(true);
     setShowVerificationDialog(false);
-    // Load all dashboard data after verification
-    fetchPendingUsers();
-    fetchSystemStats();
+    
+    // Load dashboard data
+    try {
+      await Promise.all([
+        fetchPendingUsers(),
+        fetchSystemStats()
+      ]);
+      setIsDashboardReady(true);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      setIsDashboardReady(true); // Still show dashboard even if data fails
+    }
   };
 
   const handleVerificationCancel = () => {
@@ -310,27 +323,33 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   };
 
   // Show verification dialog when not verified
-  if (!isVerified) {
+  if (!isVerified || !isDashboardReady) {
     return (
       <>
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center space-y-4 animate-pulse">
-            <Shield className="w-16 h-16 mx-auto text-primary" />
-            <h2 className="text-2xl font-bold">Admin Verification</h2>
-            <p className="text-muted-foreground">Please verify your identity to continue</p>
+          <div className="text-center space-y-4">
+            <Shield className="w-16 h-16 mx-auto text-primary animate-pulse" />
+            <h2 className="text-2xl font-bold">
+              {!isVerified ? 'Admin Verification' : 'Loading Dashboard...'}
+            </h2>
+            <p className="text-muted-foreground">
+              {!isVerified ? 'Please verify your identity to continue' : 'Preparing your workspace...'}
+            </p>
           </div>
         </div>
-        <AdminVerificationDialog
-          isOpen={showVerificationDialog}
-          onVerified={handleVerificationSuccess}
-          onCancel={handleVerificationCancel}
-        />
+        {!isVerified && (
+          <AdminVerificationDialog
+            isOpen={showVerificationDialog}
+            onVerified={handleVerificationSuccess}
+            onCancel={handleVerificationCancel}
+          />
+        )}
       </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background animate-in fade-in duration-500">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
