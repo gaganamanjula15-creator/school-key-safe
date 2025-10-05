@@ -94,36 +94,56 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   // Initial load if already verified
   useEffect(() => {
     if (isVerified && !isDashboardReady) {
-      fetchPendingUsers();
-      fetchSystemStats();
-      setIsDashboardReady(true);
+      const loadInitialData = async () => {
+        try {
+          await Promise.all([
+            fetchPendingUsers(),
+            fetchSystemStats()
+          ]);
+          setIsDashboardReady(true);
+        } catch (error) {
+          console.error('Error loading initial data:', error);
+          setIsDashboardReady(true);
+        }
+      };
+      loadInitialData();
     }
   }, [isVerified]);
 
   useEffect(() => {
     // Only set up subscriptions if verified and ready
-    if (isVerified && isDashboardReady) {
-      // Set up real-time subscription for profile changes
-      const channel = supabase
-        .channel('profile-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'profiles'
-          },
-          () => {
+    if (!isVerified || !isDashboardReady) {
+      return;
+    }
+
+    // Set up real-time subscription for profile changes
+    const channel = supabase
+      .channel('admin-profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Profile change detected:', payload);
+          // Only refetch on actual changes (not initial subscription)
+          if (payload.eventType !== 'DELETE' && payload.eventType !== 'INSERT' && payload.eventType !== 'UPDATE') {
+            return;
+          }
+          // Debounce refetch - wait a bit before updating
+          setTimeout(() => {
             fetchSystemStats();
             fetchPendingUsers();
-          }
-        )
-        .subscribe();
+          }, 500);
+        }
+      )
+      .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isVerified, isDashboardReady]);
 
   const fetchSystemStats = async () => {
@@ -268,10 +288,14 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
 
   // Mock data for stats - now loaded from database
   useEffect(() => {
-    if (pendingUsers.length >= 0) {
-      fetchSystemStats();
+    // Only update pending count when pendingUsers actually changes
+    if (systemStats.pendingApprovals !== pendingUsers.length) {
+      setSystemStats(prev => ({
+        ...prev,
+        pendingApprovals: pendingUsers.length
+      }));
     }
-  }, [pendingUsers]);
+  }, [pendingUsers.length]);
 
   const executeSystemControl = async (action: string, actionName: string) => {
     setSystemControlLoading(true);
