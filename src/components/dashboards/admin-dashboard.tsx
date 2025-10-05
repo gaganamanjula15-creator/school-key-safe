@@ -77,8 +77,13 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
     totalAdmins: 0,
     activeToday: 0
   });
-  const [isVerified, setIsVerified] = useState(false);
-  const [showVerificationDialog, setShowVerificationDialog] = useState(true);
+  const [isVerified, setIsVerified] = useState(() => {
+    // Check if already verified in this session
+    return sessionStorage.getItem('admin_verified') === 'true';
+  });
+  const [showVerificationDialog, setShowVerificationDialog] = useState(() => {
+    return sessionStorage.getItem('admin_verified') !== 'true';
+  });
   const [isDashboardReady, setIsDashboardReady] = useState(false);
   const { toast } = useToast();
 
@@ -86,12 +91,18 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   const isSystemOwner = (admin.name === 'Gagana Manjula') || 
                         (admin.first_name === 'Gagana' && admin.last_name === 'Manjula');
 
+  // Initial load if already verified
   useEffect(() => {
-    // Only fetch data if verified and ready
-    if (isVerified && isDashboardReady) {
+    if (isVerified && !isDashboardReady) {
       fetchPendingUsers();
       fetchSystemStats();
+      setIsDashboardReady(true);
+    }
+  }, [isVerified]);
 
+  useEffect(() => {
+    // Only set up subscriptions if verified and ready
+    if (isVerified && isDashboardReady) {
       // Set up real-time subscription for profile changes
       const channel = supabase
         .channel('profile-changes')
@@ -293,6 +304,8 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   };
 
   const handleVerificationSuccess = async () => {
+    // Store verification in session storage
+    sessionStorage.setItem('admin_verified', 'true');
     setIsVerified(true);
     setShowVerificationDialog(false);
     
@@ -310,6 +323,8 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   };
 
   const handleVerificationCancel = () => {
+    // Clear any verification state
+    sessionStorage.removeItem('admin_verified');
     setShowVerificationDialog(false);
     toast({
       title: "Verification Required",

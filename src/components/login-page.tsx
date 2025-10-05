@@ -53,6 +53,8 @@ export function LoginPage({ onSignup }: LoginPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Clear any previous admin verification state
+    sessionStorage.removeItem('admin_verified');
     await signIn(email, password);
   };
 
