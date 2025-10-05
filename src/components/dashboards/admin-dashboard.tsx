@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { AdminVerificationDialog } from '@/components/admin/admin-verification-dialog';
 import { 
   Shield, 
   Users, 
@@ -36,6 +37,7 @@ import { IdCardConfig } from '@/components/admin/id-card-config';
 import { SecurityConfig } from '@/components/admin/security-config';
 import { BackupConfig } from '@/components/admin/backup-config';
 import { UserManagement } from '@/components/user-management';
+import { VerificationCodeManagement } from '@/components/admin/verification-code-management';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -75,6 +77,8 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
     totalAdmins: 0,
     activeToday: 0
   });
+  const [isVerified, setIsVerified] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(true);
   const { toast } = useToast();
 
   // Check if current admin is Gagana Manjula (system owner) - using first and last name
@@ -284,6 +288,44 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
     }
   };
 
+  const handleVerificationSuccess = () => {
+    setIsVerified(true);
+    setShowVerificationDialog(false);
+  };
+
+  const handleVerificationCancel = () => {
+    setShowVerificationDialog(false);
+    toast({
+      title: "Verification Required",
+      description: "You must verify your identity to access admin features",
+      variant: "destructive",
+    });
+    // Logout user since they didn't verify
+    setTimeout(() => {
+      onLogout();
+    }, 2000);
+  };
+
+  // Show verification dialog when not verified
+  if (!isVerified) {
+    return (
+      <>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Shield className="w-16 h-16 mx-auto text-primary animate-pulse" />
+            <h2 className="text-2xl font-bold">Admin Verification</h2>
+            <p className="text-muted-foreground">Please verify your identity to continue</p>
+          </div>
+        </div>
+        <AdminVerificationDialog
+          isOpen={showVerificationDialog}
+          onVerified={handleVerificationSuccess}
+          onCancel={handleVerificationCancel}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -372,11 +414,12 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
         </div>
 
         <Tabs defaultValue="approvals" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="approvals">User Approvals</TabsTrigger>
             <TabsTrigger value="users">Manage Users</TabsTrigger>
             <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
             <TabsTrigger value="settings">System Settings</TabsTrigger>
+            <TabsTrigger value="verification">My Codes</TabsTrigger>
             {isSystemOwner && <TabsTrigger value="control">System Control</TabsTrigger>}
           </TabsList>
 
@@ -657,6 +700,11 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Verification Codes Tab */}
+          <TabsContent value="verification" className="space-y-6">
+            <VerificationCodeManagement />
           </TabsContent>
 
           {/* System Control Tab - Only for Admins */}

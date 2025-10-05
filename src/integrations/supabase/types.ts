@@ -32,6 +32,63 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_verification_attempts: {
+        Row: {
+          admin_id: string
+          attempted_at: string | null
+          id: string
+          ip_address: string | null
+          success: boolean
+          verification_code: string
+        }
+        Insert: {
+          admin_id: string
+          attempted_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success: boolean
+          verification_code: string
+        }
+        Update: {
+          admin_id?: string
+          attempted_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          verification_code?: string
+        }
+        Relationships: []
+      }
+      admin_verification_codes: {
+        Row: {
+          admin_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          verification_code: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          verification_code: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          verification_code?: string
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           attendance_date: string
