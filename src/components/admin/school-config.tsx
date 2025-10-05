@@ -46,6 +46,7 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
   }, [isOpen]);
 
   const loadSchoolConfig = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('school_config')
@@ -57,14 +58,17 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
 
       if (data?.config_value) {
         setSchoolInfo(data.config_value as unknown as SchoolInfo);
+        setIsModified(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading school config:', error);
       toast({
         title: "Error",
-        description: "Failed to load school configuration",
+        description: error?.message || "Failed to load school configuration",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,6 +80,16 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Validate required fields
+      if (!schoolInfo.name || !schoolInfo.address || !schoolInfo.phone || !schoolInfo.email) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields (marked with *)",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       
       const { error } = await supabase
@@ -83,7 +97,10 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
         .upsert({
           config_key: 'school_info',
           config_value: schoolInfo as any,
-          updated_by: user?.id
+          updated_by: user?.id,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'config_key'
         });
 
       if (error) throw error;
@@ -93,11 +110,11 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
         description: "School information has been updated successfully.",
       });
       setIsModified(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving school config:', error);
       toast({
         title: "Error",
-        description: "Failed to save school configuration",
+        description: error?.message || "Failed to save school configuration",
         variant: "destructive",
       });
     } finally {
@@ -126,7 +143,14 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        {loading && (
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">Loading configuration...</p>
+          </div>
+        )}
+
+        {!loading && (
+          <div className="space-y-6">
           {/* Logo Section */}
           <Card>
             <CardHeader>
@@ -223,6 +247,7 @@ export function SchoolConfig({ isOpen, onClose }: SchoolConfigProps) {
             </CardContent>
           </Card>
         </div>
+        )}
 
         <DialogFooter className="flex gap-2">
           <Button variant="outline" onClick={onClose}>
