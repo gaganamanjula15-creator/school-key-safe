@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, GraduationCap, Heart, Users, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Heart, Users, CheckCircle2, Upload, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import schoolLogo from '@/assets/school-logo.png';
 import heroBg from '@/assets/hero-bg.jpg';
 
@@ -25,8 +27,12 @@ export function SignupPage({ onBack }: SignupPageProps) {
     role: 'student' as 'student' | 'parent' | 'teacher'
   });
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   
   const { signUp, loading } = useAuth();
+  const { toast } = useToast();
 
   const roles = [
     {
@@ -49,10 +55,87 @@ export function SignupPage({ onBack }: SignupPageProps) {
     }
   ];
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB max)
+      if (file.size > 5242880) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file type
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select a JPEG, PNG, or WEBP image",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setProfilePhoto(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadProfilePhoto = async (userId: string): Promise<string | null> => {
+    if (!profilePhoto) return null;
+
+    try {
+      setUploading(true);
+      const fileExt = profilePhoto.name.split('.').pop();
+      const fileName = `${userId}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, profilePhoto, {
+          upsert: true,
+          contentType: profilePhoto.type
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload profile photo. You can add it later.",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Password mismatch",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -69,6 +152,21 @@ export function SignupPage({ onBack }: SignupPageProps) {
     const { error } = await signUp(formData.email, formData.password, userData);
     
     if (!error) {
+      // Upload photo after successful signup
+      if (profilePhoto) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const avatarUrl = await uploadProfilePhoto(user.id);
+          if (avatarUrl) {
+            // Update profile with avatar URL
+            await supabase
+              .from('profiles')
+              .update({ avatar_url: avatarUrl })
+              .eq('user_id', user.id);
+          }
+        }
+      }
+      
       setShowSuccessOverlay(true);
     }
   };
@@ -172,6 +270,45 @@ export function SignupPage({ onBack }: SignupPageProps) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Profile Photo Upload */}
+              <div className="space-y-3">
+                <Label>Profile Photo (Optional)</Label>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {photoPreview ? (
+                      <img 
+                        src={photoPreview} 
+                        alt="Profile preview" 
+                        className="w-24 h-24 rounded-full object-cover border-2 border-primary"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center">
+                        <User className="w-10 h-10 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      id="photo"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                    <Label
+                      htmlFor="photo"
+                      className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/80 rounded-md text-sm transition-colors"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {photoPreview ? 'Change Photo' : 'Upload Photo'}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Max 5MB. Formats: JPG, PNG, WEBP
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Personal Information */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -271,9 +408,9 @@ export function SignupPage({ onBack }: SignupPageProps) {
               <Button 
                 type="submit" 
                 className="w-full bg-gradient-primary hover:bg-primary-light shadow-glow transition-smooth"
-                disabled={loading || formData.password !== formData.confirmPassword}
+                disabled={loading || uploading || formData.password !== formData.confirmPassword}
               >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading || uploading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
 
