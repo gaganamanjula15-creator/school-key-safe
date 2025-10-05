@@ -291,6 +291,9 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   const handleVerificationSuccess = () => {
     setIsVerified(true);
     setShowVerificationDialog(false);
+    // Load all dashboard data after verification
+    fetchPendingUsers();
+    fetchSystemStats();
   };
 
   const handleVerificationCancel = () => {
@@ -311,8 +314,8 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
     return (
       <>
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <Shield className="w-16 h-16 mx-auto text-primary animate-pulse" />
+          <div className="text-center space-y-4 animate-pulse">
+            <Shield className="w-16 h-16 mx-auto text-primary" />
             <h2 className="text-2xl font-bold">Admin Verification</h2>
             <p className="text-muted-foreground">Please verify your identity to continue</p>
           </div>
@@ -327,7 +330,7 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background animate-in fade-in duration-500">
       {/* Header */}
       <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

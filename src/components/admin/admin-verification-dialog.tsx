@@ -49,8 +49,11 @@ export function AdminVerificationDialog({ isOpen, onVerified, onCancel }: AdminV
         description: `Welcome, ${data.admin.name}`,
       });
 
-      setVerificationCode('');
-      onVerified();
+      // Smooth transition
+      setTimeout(() => {
+        setVerificationCode('');
+        onVerified();
+      }, 500);
     } catch (err) {
       console.error('Verification error:', err);
       setError('An error occurred during verification');
