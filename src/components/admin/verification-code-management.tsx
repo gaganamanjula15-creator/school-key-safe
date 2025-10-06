@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, Key, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Shield, Key, Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,6 +27,7 @@ export function VerificationCodeManagement() {
   const [codes, setCodes] = useState<VerificationCode[]>([]);
   const [attempts, setAttempts] = useState<VerificationAttempt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,17 +76,89 @@ export function VerificationCodeManagement() {
     return new Date(dateString).toLocaleString();
   };
 
+  const generateNewCode = async () => {
+    setGenerating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to generate a code",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Deactivate all existing codes
+      await supabase
+        .from('admin_verification_codes')
+        .update({ is_active: false })
+        .eq('admin_id', user.id)
+        .eq('is_active', true);
+
+      // Generate new 8-character alphanumeric code
+      const newCode = Array.from({ length: 8 }, () => 
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.charAt(Math.floor(Math.random() * 36))
+      ).join('');
+
+      // Insert new code (expires in 30 days)
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      const { error } = await supabase
+        .from('admin_verification_codes')
+        .insert({
+          admin_id: user.id,
+          verification_code: newCode,
+          is_active: true,
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `New verification code generated: ${newCode}`,
+      });
+
+      // Refresh codes
+      await fetchCodes();
+    } catch (error) {
+      console.error('Error generating code:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate new code",
+        variant: "destructive",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Key className="w-5 h-5" />
-            Your Verification Codes
-          </CardTitle>
-          <CardDescription>
-            Manage your admin verification codes for secure access
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                Your Verification Codes
+              </CardTitle>
+              <CardDescription>
+                Manage your admin verification codes for secure access
+              </CardDescription>
+            </div>
+            <Button 
+              onClick={generateNewCode} 
+              disabled={generating || loading}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
+              Generate New Code
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
