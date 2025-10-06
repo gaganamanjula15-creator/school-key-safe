@@ -24,7 +24,7 @@ export function SignupPage({ onBack }: SignupPageProps) {
     lastName: '',
     studentNumber: '',
     grade: '',
-    role: 'student' as 'student' | 'parent' | 'teacher'
+    role: 'student' as 'student' | 'parent' | 'teacher' | 'moderator'
   });
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
@@ -52,6 +52,12 @@ export function SignupPage({ onBack }: SignupPageProps) {
       label: 'Parent',
       icon: Heart,
       description: 'Register as a parent'
+    },
+    {
+      value: 'moderator' as const,
+      label: 'Moderator',
+      icon: User,
+      description: 'Register as a moderator'
     }
   ];
 

@@ -4,12 +4,13 @@ import { SignupPage } from '@/components/auth/SignupPage';
 import { EnhancedStudentDashboard } from '@/components/enhanced-student-dashboard';
 import { EnhancedTeacherDashboard } from '@/components/enhanced-teacher-dashboard';
 import { AdminDashboard } from '@/components/dashboards/admin-dashboard';
+import { ModeratorDashboard } from '@/components/dashboards/moderator-dashboard';
 import { ParentDashboard } from '@/components/dashboards/parent-dashboard';
 import { WelcomeOverlay } from '@/components/welcome-overlay';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
-type UserRole = 'student' | 'teacher' | 'admin' | 'parent';
+type UserRole = 'student' | 'teacher' | 'admin' | 'moderator' | 'parent';
 
 interface StudentData {
   name: string;
@@ -35,6 +36,14 @@ interface TeacherData {
 }
 
 interface AdminData {
+  name: string;
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
+
+interface ModeratorData {
   name: string;
   id: string;
   email: string;
@@ -68,6 +77,7 @@ type User =
   | ({ role: 'student' } & StudentData)
   | ({ role: 'teacher' } & TeacherData)  
   | ({ role: 'admin' } & AdminData)
+  | ({ role: 'moderator' } & ModeratorData)
   | ({ role: 'parent' } & ParentData);
 
 const Index = () => {
@@ -145,6 +155,10 @@ const Index = () => {
       ...(userProfile.role === 'admin' && {
         first_name: userProfile.first_name,
         last_name: userProfile.last_name
+      }),
+      ...(userProfile.role === 'moderator' && {
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name
       })
     };
 
@@ -158,6 +172,8 @@ const Index = () => {
           return <ParentDashboard parent={userData as any} onLogout={signOut} />;
         case 'admin':
           return <AdminDashboard admin={userData as any} onLogout={signOut} />;
+        case 'moderator':
+          return <ModeratorDashboard moderator={userData as any} onLogout={signOut} />;
         default:
           return null;
       }
