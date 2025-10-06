@@ -38,6 +38,7 @@ import { SecurityConfig } from '@/components/admin/security-config';
 import { BackupConfig } from '@/components/admin/backup-config';
 import { UserManagement } from '@/components/user-management';
 import { VerificationCodeManagement } from '@/components/admin/verification-code-management';
+import { PrivateMessages } from '@/components/private-messages';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -475,9 +476,10 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
         </div>
 
         <Tabs defaultValue="approvals" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="approvals">User Approvals</TabsTrigger>
             <TabsTrigger value="users">Manage Users</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
             <TabsTrigger value="settings">System Settings</TabsTrigger>
             <TabsTrigger value="verification">My Codes</TabsTrigger>
@@ -558,6 +560,11 @@ export function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
           {/* Manage Users Tab */}
           <TabsContent value="users" className="space-y-6">
             <UserManagement />
+          </TabsContent>
+
+          {/* Private Messages Tab */}
+          <TabsContent value="messages" className="space-y-6">
+            <PrivateMessages />
           </TabsContent>
 
           {/* Bulk Operations Tab */}
